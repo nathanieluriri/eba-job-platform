@@ -9,6 +9,8 @@ from schemas.tokens_schema import refreshedToken,accessTokenOut
 
 
 token_auth_scheme = HTTPBearer()
+# TODO: Create seperate functions for verifying agent tokens and client tokens to enable seperate protection of client related endpoints and agent related endpoints
+
 async def verify_token(token: str = Depends(token_auth_scheme))->accessTokenOut:
     result = await get_access_tokens(accessToken=token.credentials)
     
