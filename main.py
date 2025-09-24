@@ -1,0 +1,130 @@
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+from slowapi import Limiter
+from limits import  RateLimitItemPerMinute
+from limits.storage import MemoryStorage
+from slowapi.errors import RateLimitExceeded
+from schemas.response_schema import APIResponse
+import time   
+
+# TODO: Modify this if you want to use the time it took for a request to be completed in anyway like maybe calculating the average speed of each individual endpoint
+class RequestTimingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        # Record the start time before processing the request
+        start_time = time.time()
+        
+        # Process the request and get the response
+        response = await call_next(request)
+        
+        # Calculate the time taken to process the request
+        process_time = time.time() - start_time
+        
+        # You can log the time or set it in the response headers
+        response.headers['X-Process-Time'] = str(process_time)
+        
+        # Optionally, print it for logging purposes
+        print(f"Request to {request.url} took {process_time:.6f} seconds")
+        
+        return response
+    
+# Create the FastAPI app
+app = FastAPI()
+app.add_middleware(RequestTimingMiddleware)
+# Setup limiter
+storage = MemoryStorage()
+limiter = Limiter(storage)
+
+# TODO: Define rate limits per user type Change the logic here to be more dynamic or not
+RATE_LIMITS = {
+    "free": RateLimitItemPerMinute(5),
+    "premium": RateLimitItemPerMinute(20),
+    "admin": RateLimitItemPerMinute(100),
+}
+
+# TODO: Dummy user resolution function (replace with function to actually get user from the request object)
+def get_user_type(request: Request) -> tuple[str, str]:
+    """
+    Return a tuple of (user_identifier, user_type)
+    You can extract from JWT, headers, or session.
+    """
+    user_id = request.headers.get("X-User-ID", "anonymous")
+    user_type = request.headers.get("X-User-Type", "free").lower()
+    return user_id, user_type if user_type in RATE_LIMITS else "free"
+
+class RateLimitingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        user_id, user_type = get_user_type(request)
+        rate_limit_rule = RATE_LIMITS[user_type]
+
+        try:
+            # Use user_id as the rate limit key
+            limiter.hit(rate_limit_rule, user_id)
+
+            response = await call_next(request)
+            return response
+
+        except RateLimitExceeded:
+            # Get time until the limit resets
+            _, reset_time = limiter.get_window_stats(rate_limit_rule, user_id)
+            current_time = int(time.time())
+            seconds_until_reset = max(reset_time - current_time, 0)
+
+            return JSONResponse(
+                status_code=429,
+                content=APIResponse(
+                    status_code=429,
+                    data={
+                        "retry_after_seconds": seconds_until_reset,
+                        "user_type": user_type
+                    },
+                    detail="Too Many Requests"
+                ).dict()
+            )
+            
+
+# Add the middleware to the app
+# ||||||||||||||||||||||||||||||||||||
+
+# app.add_middleware(RateLimitingMiddleware)
+
+# ||||||||||||||||||||||||||||||||||||
+
+# Add CORS middleware (be cautious in production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Custom exception handler for HTTPExceptions
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=APIResponse(
+            status_code=exc.status_code,
+            data=None,
+            detail=exc.detail,
+        ).dict()
+    )
+
+# Simple test route
+@app.get("/")
+def read_root():
+    return {"message": "Hello from FasterAPI!"}
+
+# Health check route
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+# --- auto-routes-start ---
+from api.v1.user_route import router as v1_user_route_router
+
+app.include_router(v1_user_route_router, prefix='/v1')
+# --- auto-routes-end ---
