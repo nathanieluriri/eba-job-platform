@@ -6,6 +6,8 @@ from datetime import datetime, timezone, timedelta
 from dateutil import parser
 from bson import ObjectId,errors
 from fastapi import HTTPException
+from repositories.client import get_client
+from repositories.agent import get_agent
 
 async def add_access_tokens(token_data:accessTokenCreate)->accessTokenOut:
     token = token_data.model_dump()
@@ -101,6 +103,71 @@ async def get_access_tokens(accessToken:str)->accessTokenOut:
     
     
     
+async def get_client_access_tokens(accessToken:str)->accessTokenOut:
+    
+    token = await db.accessToken.find_one({"_id": ObjectId(accessToken)})
+    if token:
+        if is_older_than_days(date_value=token['dateCreated'])==False:
+            if token.get("role",None)=="member":
+                userId = token.get("userId")
+                if get_client(filter_dict={"_id":ObjectId(userId)}):
+                
+                    tokn = accessTokenOut(**token)
+                    return tokn
+                else:
+                    print("not a client access token")
+                    
+            elif token.get("role",None)=="admin":
+                if token.get('status',None)=="active":
+                    tokn = accessTokenOut(**token)
+                    return tokn
+                else: 
+                    return None
+            else:
+                return None
+            
+        else:
+            delete_access_token(accessToken=str(token['_id'])) 
+            return None
+    else:
+        print("No token found")
+        return "None"
+    
+    
+    
+async def get_agent_access_tokens(accessToken:str)->accessTokenOut:
+    
+    token = await db.accessToken.find_one({"_id": ObjectId(accessToken)})
+    if token:
+        if is_older_than_days(date_value=token['dateCreated'])==False:
+            if token.get("role",None)=="member":
+                userId = token.get("userId")
+                if get_agent(filter_dict={"_id":ObjectId(userId)}):
+                
+                    tokn = accessTokenOut(**token)
+                    return tokn
+                else:
+                    print("not a client access token")
+            if token.get("role",None)=="member":
+                tokn = accessTokenOut(**token)
+                return tokn
+            elif token.get("role",None)=="admin":
+                if token.get('status',None)=="active":
+                    tokn = accessTokenOut(**token)
+                    return tokn
+                else: 
+                    return None
+            else:
+                return None
+            
+        else:
+            delete_access_token(accessToken=str(token['_id'])) 
+            return None
+    else:
+        print("No token found")
+        return "None"
+    
+        
 
 
 async def get_access_tokens_no_date_check(accessToken:str)->accessTokenOut:

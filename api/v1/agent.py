@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, HTTPException, Query, status, Path
+from fastapi import APIRouter, HTTPException, Query, status, Path,Depends
 from typing import List
 from schemas.response_schema import APIResponse
 from schemas.agent import (
@@ -23,21 +23,22 @@ from services.agent_service import (
     update_agent,
     authenticate_agent
 )
+from security.auth import verify_agent_token,accessTokenOut
+
 
 router = APIRouter(prefix="/agents", tags=["Agents"])
 
 
-@router.get("/", response_model=APIResponse[List[AgentOut]])
-async def list_agents():
-    items = await retrieve_agents()
-    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
-@router.get("/me", response_model=APIResponse[AgentOut])
-async def get_my_agents(id: str = Query(..., description="agent ID to fetch specific item")):
-    items = await retrieve_agent_by_agent_id(id=id)
+@router.get("/me",response_model_exclude_none=True, dependencies=[Depends(verify_agent_token)],response_model=APIResponse[UserOut])
+async def get_my_agents(token:accessTokenOut =Depends(verify_agent_token)):
+    
+    items = await retrieve_agent_by_agent_id(id=token.userId)
+    items.password=""
     return APIResponse(status_code=200, data=items, detail="agents items fetched")
 
 @router.post("/login", response_model=APIResponse[UserOut])
 async def login_user(user_data:UserLogin):
     items = await authenticate_agent(user_data=user_data)
+    items.password=""
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
