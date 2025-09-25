@@ -110,7 +110,7 @@ async def get_client_access_tokens(accessToken:str)->accessTokenOut:
         if is_older_than_days(date_value=token['dateCreated'])==False:
             if token.get("role",None)=="member":
                 userId = token.get("userId")
-                if get_client(filter_dict={"_id":ObjectId(userId)}):
+                if await get_client(filter_dict={"_id":ObjectId(userId)}):
                 
                     tokn = accessTokenOut(**token)
                     return tokn
@@ -142,7 +142,7 @@ async def get_agent_access_tokens(accessToken:str)->accessTokenOut:
         if is_older_than_days(date_value=token['dateCreated'])==False:
             if token.get("role",None)=="member":
                 userId = token.get("userId")
-                if get_agent(filter_dict={"_id":ObjectId(userId)}):
+                if await get_agent(filter_dict={"_id":ObjectId(userId)}):
                 
                     tokn = accessTokenOut(**token)
                     return tokn
