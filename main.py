@@ -10,7 +10,7 @@ from schemas.response_schema import APIResponse
 from repositories.tokens_repo import get_access_tokens_no_date_check
 from limits import parse
 import time   
-from core.redis_cache import REDIS_HOST,REDIS_PASSWORD,REDIS_PORT,REDIS_USERNAME
+
 
 
 
@@ -44,7 +44,7 @@ app = FastAPI()
 app.add_middleware(RequestTimingMiddleware)
 # Setup limiter
 storage = RedisStorage(
-    f"redis://{REDIS_USERNAME}:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
+    "redis://localhost:6379/0"
 )
 
 limiter = FixedWindowRateLimiter(storage)
@@ -95,6 +95,7 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
                 status_code=429,
                 headers={
                     "X-User-Type": user_type,
+                    "X-User-Id":user_id,
                     "X-RateLimit-Limit": str(rate_limit_rule.amount),
                     "X-RateLimit-Remaining": str(max(remaining, 0)),
                     "X-RateLimit-Reset": str(seconds_until_reset),
@@ -114,6 +115,7 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         # Add rate-limit headers for successful requests too
+        response.headers["X-User-Id"]=user_id
         response.headers["X-User-Type"] = user_type
         response.headers["X-RateLimit-Limit"] = str(rate_limit_rule.amount)
         response.headers["X-RateLimit-Remaining"] = str(max(remaining, 0))
