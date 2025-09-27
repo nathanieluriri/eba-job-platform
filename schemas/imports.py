@@ -19,3 +19,28 @@ class UserRoles(Enum):
 class UserRolesBase(str,Enum):
     client="client"
     agent="agent"
+    
+    
+class JobCatgeries(str,Enum):
+    web_development="Web Devlopment"
+    mobile_development="Mobile Development"
+    ui_ux_design="UI/UX Design"
+    content_writing="Content Writing"
+    digital_marketing="Digital Marketing"
+    data_analysis="Data Analysis"
+    other="Other"
+    
+    
+class JobTimeline(BaseModel):
+    start_date:int
+    deadline:int
+    
+    
+class Skills(str,Enum):
+    web_development="Web Devlopment"
+    mobile_development="Mobile Development"
+    ui_ux_design="UI/UX Design"
+    content_writing="Content Writing"
+    digital_marketing="Digital Marketing"
+    data_analysis="Data Analysis"
+    other="Other"
