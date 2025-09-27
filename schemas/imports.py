@@ -21,6 +21,10 @@ class UserRolesBase(str,Enum):
     agent="agent"
     
     
+class JobStatus(str,Enum):
+    active="active"
+    pending="pending"
+    
 class JobCatgeries(str,Enum):
     web_development="Web Devlopment"
     mobile_development="Mobile Development"

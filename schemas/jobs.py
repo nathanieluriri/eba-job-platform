@@ -24,12 +24,21 @@ class JobsBase(BaseModel):
 
 class JobsCreate(JobsBase):
     # Add other fields here
-    client_id:str 
+    client_id:str
+    status:Optional[JobStatus]=JobStatus.pending 
     date_created: int = Field(default_factory=lambda: int(time.time()))
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
 class JobsUpdate(BaseModel):
-    # Add other fields here 
+    # Add other fields here
+    skills_needed:Optional[Skills]=None
+    timeline:Optional[JobTimeline]=None
+    description:Optional[str]=None
+    requirement:Optional[str]=None
+    skills_needed:Optional[Skills]=None
+    category: Optional[JobCatgeries]=None
+    budget:Optional[int]=None
+    status:Optional[JobStatus]=None 
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
 class JobsOut(JobsBase):
