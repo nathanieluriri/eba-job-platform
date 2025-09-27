@@ -25,7 +25,7 @@ class JobsBase(BaseModel):
 class JobsCreate(JobsBase):
     # Add other fields here
     client_id:str
-    status: JobStatus = Field(default=JobStatus.PENDING)
+    status: JobStatus = Field(default=JobStatus.pending)
     date_created: int = Field(default_factory=lambda: int(time.time()))
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
