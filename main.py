@@ -10,7 +10,7 @@ from schemas.response_schema import APIResponse
 from repositories.tokens_repo import get_access_tokens_no_date_check
 from limits import parse
 import time   
-
+import os
 
 
 
@@ -37,16 +37,15 @@ class RequestTimingMiddleware(BaseHTTPMiddleware):
     
 
  
+redis_url = os.getenv("CELERY_BROKER_URL") or os.getenv("REDIS_URL") \
+    or f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', '6379')}/0"
 
     
 # Create the FastAPI app
 app = FastAPI()
 app.add_middleware(RequestTimingMiddleware)
 # Setup limiter
-storage = RedisStorage(
-    "redis://localhost:6379/0"
-)
-
+storage = RedisStorage(redis_url)
 limiter = FixedWindowRateLimiter(storage)
 
 RATE_LIMITS = {
