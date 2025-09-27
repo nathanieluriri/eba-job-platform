@@ -44,7 +44,7 @@ async def get_my_jobss(id: str = Query(..., description="jobs ID to fetch specif
 
 
 @router.post("/", description="⚠️**REQUIRES CLIENT TOKENS**",response_model=APIResponse[JobsOut])
-async def get_my_jobss(data:JobsBase,token:accessTokenOut = Depends(verify_client_token)):
+async def post_new_jobs(data:JobsBase,token:accessTokenOut = Depends(verify_client_token)):
     job_data = JobsCreate(**data.model_dump(),client_id=token.userId)
     items = await add_jobs(jobs_data=job_data)
     return APIResponse(status_code=200, data=items, detail="jobss items fetched")
