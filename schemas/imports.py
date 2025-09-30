@@ -1,4 +1,5 @@
 from bson import ObjectId
+from typing_extensions import Self
 from pydantic import GetJsonSchemaHandler
 from pydantic import BaseModel, EmailStr, Field,model_validator
 from pydantic_core import core_schema
@@ -48,3 +49,9 @@ class Skills(str,Enum):
     digital_marketing="Digital Marketing"
     data_analysis="Data Analysis"
     other="Other"
+    
+    
+class PriceBreakDown(BaseModel):
+    Service:int
+    Charges:float
+    Tax:float

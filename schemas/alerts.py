@@ -1,7 +1,7 @@
 # ============================================================================
-#JOBS SCHEMA 
+#ALERTS SCHEMA 
 # ============================================================================
-# This file was auto-generated on: 2025-09-27 09:01:53 WAT
+# This file was auto-generated on: 2025-09-30 13:48:37 WAT
 # It contains Pydantic classes  database
 # for managing attributes and validation of data in and out of the MongoDB database.
 #
@@ -9,47 +9,30 @@
 
 from schemas.imports import *
 from pydantic import Field
-
 import time
 
-class JobsBase(BaseModel):
+class AlertsBase(BaseModel):
     # Add other fields here
-    project_title:str
-    category: JobCatgeries
-    budget:int
-    description:str
-    requirement:str
-    skills_needed:Skills
-    timeline:JobTimeline
+    priority:
+    alert_type:
+    alert_title:
+    alert_description:
+    alert_primary_action:
+    alert_secondary_action: 
     pass
 
-class JobsCreate(JobsBase):
+class AlertsCreate(AlertsBase):
     # Add other fields here
-    client_id:str
-    admin_approved:bool = Field(default=False)
-    break_down:PriceBreakDown= Field(default=PriceBreakDown(Service=0,Charges=0,Tax=0))
-    status: JobStatus = Field(default=JobStatus.pending)
+
+    
     date_created: int = Field(default_factory=lambda: int(time.time()))
     last_updated: int = Field(default_factory=lambda: int(time.time()))
-    @model_validator(mode='after')
-    def set_dynamic_values(self)-> Self:
-        self.break_down=PriceBreakDown(Service=self.budget,Charges=5,Tax=5)
-        return self
-class JobsUpdate(BaseModel):
-    # Add other fields here
-    skills_needed:Optional[Skills]=None
-    timeline:Optional[JobTimeline]=None
-    description:Optional[str]=None
-    requirement:Optional[str]=None
-    skills_needed:Optional[Skills]=None
-    category: Optional[JobCatgeries]=None
-    budget:Optional[int]=None
-    admin_approved:Optional[bool] =None
-    break_down:Optional[PriceBreakDown]=None 
-    status:Optional[JobStatus]=None 
+
+class AlertsUpdate(BaseModel):
+    # Add other fields here 
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
-class JobsOut(JobsBase):
+class AlertsOut(AlertsBase):
     # Add other fields here 
     id: Optional[str] =None
     date_created: Optional[int] = None
