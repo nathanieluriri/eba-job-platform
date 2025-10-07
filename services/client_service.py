@@ -75,13 +75,13 @@ async def retrieve_client_by_client_id(id: str) -> ClientOut:
     return result
 
 
-async def retrieve_clients(start=0,stop=100) -> List[ClientOut]:
+async def retrieve_clients(filter=None,start=0,stop=100) -> List[ClientOut]:
     """Retrieves ClientOut Objects in a list
 
     Returns:
         _type_: ClientOut
     """
-    return await get_clients(start=start,stop=stop)
+    return await get_clients(filter_dict=filter,start=start,stop=stop)
 
 
 async def update_client_by_id(client_id: str, client_data: ClientUpdate) -> ClientOut:

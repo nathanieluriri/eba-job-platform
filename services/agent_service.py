@@ -74,13 +74,13 @@ async def retrieve_agent_by_agent_id(id: str) -> AgentOut:
     return result
 
 
-async def retrieve_agents(start=0,stop=100) -> List[AgentOut]:
+async def retrieve_agents(filter=None,start=0,stop=100) -> List[AgentOut]:
     """Retrieves AgentOut Objects in a list
 
     Returns:
         _type_: AgentOut
     """
-    return await get_agents(start=start,stop=stop)
+    return await get_agents(filter_dict=filter,start=start,stop=stop)
 
 
 async def update_agent_by_id(agent_id: str, agent_data: AgentUpdate) -> AgentOut:

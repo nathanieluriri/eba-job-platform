@@ -26,6 +26,9 @@ class accessTokenOut(accessTokenBase):
         if values is None:
             values = {}
         values['accesstoken']= str(values.get('_id'))
+        admin_token = values.get("accessToken",None)
+        if admin_token:
+            values['accesstoken']=values.get("accessToken")
         return values
     
     model_config = {

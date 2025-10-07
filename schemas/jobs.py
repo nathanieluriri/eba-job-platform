@@ -33,7 +33,7 @@ class JobsCreate(JobsBase):
     last_updated: int = Field(default_factory=lambda: int(time.time()))
     @model_validator(mode='after')
     def set_dynamic_values(self)-> Self:
-        self.break_down=PriceBreakDown(Service=self.budget,Charges=5,Tax=5)
+        self.break_down=PriceBreakDown(Charges=5,Tax=5)
         return self
 class JobsUpdate(BaseModel):
     # Add other fields here
@@ -43,7 +43,6 @@ class JobsUpdate(BaseModel):
     requirement:Optional[str]=None
     skills_needed:Optional[Skills]=None
     category: Optional[JobCatgeries]=None
-    budget:Optional[int]=None
     admin_approved:Optional[bool] =None
     break_down:Optional[PriceBreakDown]=None 
     status:Optional[JobStatus]=None 
@@ -54,7 +53,9 @@ class JobsOut(JobsBase):
     id: Optional[str] =None
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
-    
+    admin_approved:bool = Field(default=False)
+    break_down:PriceBreakDown= Field(default=PriceBreakDown(Service=0,Charges=0,Tax=0))
+    status: JobStatus = Field(default=JobStatus.pending)
     @model_validator(mode='before')
     def set_dynamic_values(cls,values):
         values['id']= str(values.get('_id'))

@@ -12,8 +12,20 @@ from pydantic import Field
 import time
 
 class ClientBase(BaseModel):
-    # Add other fields here 
-    pass
+    email: EmailStr
+    phone_number: str
+    certificate_url: List[str]
+    video_url: str
+    personality_url: str
+    company_name: Optional[str] = None
+    company_email: Optional[str] = None
+    company_address: Optional[str] = None
+    full_name: Optional[str] = None
+    services: Optional[List[Skills]] = None
+    client_reason_for_signing_up: Optional[ClientReasonForSignUp] = None
+    client_need_agent_work_hours_to_be: Optional[ClientNeedAgentWorkHoursToBe] = None
+
+
 
 class ClientCreate(ClientBase):
     # Add other fields here 

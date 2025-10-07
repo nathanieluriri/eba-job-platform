@@ -61,53 +61,18 @@ async def verify_token_to_refresh(token: str = Depends(token_auth_scheme)):
         return result
         
         
-        
-async def verify_token_and_refresh_token(token: str = Depends(token_auth_scheme)):
-    from repositories.tokens_repo import delete_access_token
-    from repositories.tokens_repo import update_admin_access_tokens
-    decodedT= await decode_jwt_token_without_expiration(token=token.credentials)
-    if decodedT['role']=="member":
-        result = await validate_member_accesstoken_without_expiration(accessToken=token.credentials)
-        
-        accessTokenObj= await generate_member_access_tokens(userId=result.userId)
-        
-        refreshTokenObj = await generate_refresh_tokens(userId=result.userId,accessToken=accessTokenObj.accesstoken)
-        await delete_access_token(result.accesstoken)
-        refreshedTokens = refreshedToken(userId=result.userId,refreshToken=refreshTokenObj.refreshtoken,accessToken=accessTokenObj.accesstoken)
-        if result==None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
-        else:
-            return refreshedTokens
-    elif decodedT['role']=="admin":
-        result = await validate_expired_admin_accesstoken(accessToken=str(token.credentials))
-        print("result",result)
-        if result =="inactive":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="You Can't Make Use of an Inactive AccessToken"
-            )
-        
-        elif isinstance(result,accessTokenOut):
-            accessTokenObj = await generate_admin_access_tokens(userId=result.userId)
-            NewDecodedT = await decode_jwt_token(token=accessTokenObj.accesstoken)
-            
-            await update_admin_access_tokens(token=NewDecodedT['accessToken'])
-            refreshTokenObj = await generate_refresh_tokens(userId=result.userId,accessToken=accessTokenObj.accesstoken)
-            await delete_access_token(result.accesstoken)
-            refreshedTokens = refreshedToken(userId=result.userId,refreshToken=refreshTokenObj.refreshtoken,accessToken=accessTokenObj.accesstoken)
-            return refreshedTokens
-        elif result==None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid Token"
-            )
-           
+      
 async def verify_admin_token(token: str = Depends(token_auth_scheme)):
+    from repositories.tokens_repo import get_admin_access_tokens
+    
     try:
-        result = await validate_admin_accesstoken(accessToken=str(token.credentials))
+        decoded_access_token = await decode_jwt_token(token=token.credentials)
+        print("")
+        print("")
+        print(decoded_access_token['accessToken'])
+        print("")
+        print("")
+        result = await get_admin_access_tokens(accessToken=decoded_access_token['accessToken'])
 
         if result==None:
             raise HTTPException(

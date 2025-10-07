@@ -8,23 +8,23 @@
 # ============================================================================
 
 from schemas.imports import *
-from pydantic import Field
+from pydantic import Field,ConfigDict
 import time
-
+ 
 class AlertsBase(BaseModel):
-    # Add other fields here
-    priority:
-    alert_type:
-    alert_title:
-    alert_description:
-    alert_primary_action:
-    alert_secondary_action: 
-    pass
+
+    user_type: UserTypes = Field(..., description="The type of user receiving the alert (e.g., agent, client, admin).")
+    user_id: str = Field(..., description="The unique identifier of the user receiving the alert.")
+    priority: PriorityStatus = Field(..., description="The priority level of the alert (e.g., high, medium, low).")
+    alert_type: AlertType = Field(..., description="The type/category of alert being sent.")
+    alert_title: str = Field(..., description="A short, human-readable title for the alert.")
+    alert_description: str = Field(..., description="A detailed explanation of the alert's purpose or context.")
+    alert_primary_action: str = Field(..., description="Primary action the user should take in response to the alert.")
+    alert_secondary_action: str = Field(..., description="Secondary (optional) action the user can take.")
+
 
 class AlertsCreate(AlertsBase):
     # Add other fields here
-
-    
     date_created: int = Field(default_factory=lambda: int(time.time()))
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 

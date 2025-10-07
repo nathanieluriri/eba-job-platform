@@ -6,8 +6,10 @@ from datetime import datetime, timezone, timedelta
 from dateutil import parser
 from bson import ObjectId,errors
 from fastapi import HTTPException
+from repositories.admin_repo import get_admin
 from repositories.client import get_client
 from repositories.agent import get_agent
+from security.encrypting_jwt import decode_jwt_token_without_expiration
 
 async def add_access_tokens(token_data:accessTokenCreate)->accessTokenOut:
     token = token_data.model_dump()
@@ -22,7 +24,7 @@ async def add_access_tokens(token_data:accessTokenCreate)->accessTokenOut:
 async def add_admin_access_tokens(token_data:accessTokenCreate)->accessTokenOut:
     token = token_data.model_dump()
     token['role']="admin"
-    token['status']="inactive"
+    token['status']="active"
     result = await db.accessToken.insert_one(token)
     tokn = await db.accessToken.find_one({"_id":result.inserted_id})
     accessToken = accessTokenOut(**tokn)
@@ -135,6 +137,38 @@ async def get_client_access_tokens(accessToken:str)->accessTokenOut:
     
     
     
+async def get_admin_access_tokens(accessToken:str)->accessTokenOut:
+    
+    token = await db.accessToken.find_one({"_id": ObjectId(accessToken)})
+    print(token)
+    if token:
+        if is_older_than_days(date_value=token['dateCreated'])==False:
+            if token.get("role",None)=="admin":
+                userId = token.get("userId")
+                if await get_admin(filter_dict={"_id":ObjectId(userId)}):
+                
+                    tokn = accessTokenOut(**token)
+                    return tokn
+                else:
+                    print("not an admin access token")
+                    
+            elif token.get("role",None)=="admin":
+                if token.get('status',None)=="active":
+                    tokn = accessTokenOut(**token)
+                    return tokn
+                else: 
+                    return None
+            else:
+                return None
+            
+        else:
+            delete_access_token(accessToken=str(token['_id'])) 
+            return None
+    else:
+        print("No token foundddd")
+        return None
+    
+    
 async def get_agent_access_tokens(accessToken:str)->accessTokenOut:
     
     token = await db.accessToken.find_one({"_id": ObjectId(accessToken)})
@@ -168,27 +202,31 @@ async def get_agent_access_tokens(accessToken:str)->accessTokenOut:
         return "None"
     
         
+from bson.errors import InvalidId
 
+async def get_access_tokens_no_date_check(accessToken: str) -> accessTokenOut | None:
+    try:
+        # Try interpreting the token as an ObjectId
+        object_id = ObjectId(accessToken)
+        token = await db.accessToken.find_one({"_id": object_id})
+    except (InvalidId, TypeError):
+        # If it's not a valid ObjectId, fall back to decoding the token
+        token = await decode_jwt_token_without_expiration(accessToken)
+        print("hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+        print(token)
 
-async def get_access_tokens_no_date_check(accessToken:str)->accessTokenOut:
-    
-    token = await db.accessToken.find_one({"_id": ObjectId(accessToken)})
-    if token:
-        if token.get("role",None)=="member":
-            tokn = accessTokenOut(**token)
-            return tokn
-        elif token.get("role",None)=="admin":
-            if token.get('status',None)=="active":
-                tokn = accessTokenOut(**token)
-                return tokn
-            else: 
-                return None
-        else:
-            return None
-        
-    
-    else:
+    if not token:
         print("No token found")
+        return None
+
+    role = token.get("role")
+    status = token.get("status")
+
+    if role == "member":
+        return accessTokenOut(**token)
+    elif role == "admin":
+       return accessTokenOut(**token)
+    else:
         return None
 
     
@@ -205,3 +243,7 @@ async def get_refresh_tokens(refreshToken:str)->refreshTokenOut:
 async def delete_all_tokens_with_user_id(userId:str):
     await db.refreshToken.delete_many(filter={"userId":userId})
     await db.accessToken.delete_many(filter={"userId":userId})
+    
+async def delete_all_tokens_with_admin_id(adminId:str):
+    await db.refreshToken.delete_many(filter={"userId":adminId})
+    await db.accessToken.delete_many(filter={"userId":adminId})
