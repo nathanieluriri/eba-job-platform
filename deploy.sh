@@ -3,7 +3,7 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-APP_DIR="/eba-job-platform"   # Path to your app on the server
+APP_DIR="/root/eba-job-platform"   # Path to your app on the server
 NGINX_SERVICE="nginx"             # Nginx systemd service name
 
 echo "=== Starting deployment of Eba Job Platform ==="
