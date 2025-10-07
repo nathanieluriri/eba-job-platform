@@ -17,7 +17,7 @@ jobs:
         with:
           host: ${{ secrets.DROPLET_HOST }}        # e.g. 165.232.xxx.xxx
           username: root                           # or 'ubuntu' if your droplet uses that
-          key: ${{ secrets.DROPLET_KEYS }}          # your private SSH key stored in GitHub Secrets
+          key: ${{ secrets.DROPLET_KEY }}          # your private SSH key stored in GitHub Secrets
           port: 22
           script: |
             cd /root/eba-job-platform
