@@ -1,0 +1,22 @@
+name: Test SSH to Droplet
+
+on:
+  workflow_dispatch:  # allows you to manually trigger from GitHub UI
+
+jobs:
+  test-ssh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test SSH connection
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: root
+          key: ${{ secrets.DROPLET_KEY }}
+          port: 22
+          script: |
+            echo "✅ SSH connection works!"
+            hostname
+            whoami
+            uptime

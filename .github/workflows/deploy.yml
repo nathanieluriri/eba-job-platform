@@ -2,22 +2,25 @@ name: Deploy to Droplet
 
 on:
   push:
-    branches: [master]  # or main if that’s your default branch
+    branches: [master]  # or 'main' if that's your default branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to DigitalOcean Droplet
-        uses: appleboy/ssh-action@master
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to DigitalOcean Droplet via SSH
+        uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.DROPLET_HOST }}     # your Droplet's public IP or DNS
-          username: root                        # or the user you log in with
-          password: ${{ secrets.DROPLET_PASSWORD }}  # store your droplet password in GitHub secrets
+          host: ${{ secrets.DROPLET_HOST }}        # e.g. 165.232.xxx.xxx
+          username: root                           # or 'ubuntu' if your droplet uses that
+          key: ${{ secrets.DROPLET_KEY }}          # your private SSH key stored in GitHub Secrets
           port: 22
           script: |
-            cd /opt/eba-job-platform            # path to your project on the droplet
-            git pull origin master              # or main
+            cd /root/eba-job-platform
+            git pull origin master
             chmod +x deploy.sh
             ./deploy.sh
