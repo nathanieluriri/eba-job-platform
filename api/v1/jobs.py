@@ -9,6 +9,7 @@ from schemas.jobs import (
     JobsBase,
     PriceBreakDown,
     JobsUpdate,
+    JobStatus
 )
 from services.jobs_service import (
     add_jobs,
@@ -157,8 +158,10 @@ async def approve_new_job_posting(
                 },
             }
         }
-    )
+    ),
+        token: accessTokenOut = Depends(verify_admin_token),
 ):
     if job_data.admin_approved is True:
-        JobsUpdate(admin_approved=True, break_down=job_data.break_down)
-        await update_jobs_by_id(jobs_id=job_id)
+        data = JobsUpdate(admin_approved=True, break_down=job_data.break_down)
+        returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
+        return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")

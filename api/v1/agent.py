@@ -39,6 +39,7 @@ router = APIRouter(prefix="/agents", tags=["Agents"])
     "/{start}/{stop}", 
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
+       response_model_exclude={"data": {"__all__": {"password"}}},
     dependencies=[Depends(verify_token)]
 )
 async def list_agents(
@@ -76,14 +77,14 @@ async def list_agents(
 
 
 
-@router.get("/me",response_model_exclude_none=True, dependencies=[Depends(verify_agent_token)],response_model=APIResponse[UserOut])
+@router.get("/me", response_model_exclude={"data": {"password"}},response_model_exclude_none=True, dependencies=[Depends(verify_agent_token)],response_model=APIResponse[UserOut])
 async def get_my_agents(token:accessTokenOut =Depends(verify_agent_token)):
     
     items = await retrieve_agent_by_agent_id(id=token.userId)
     items.password=""
     return APIResponse(status_code=200, data=items, detail="agents items fetched")
 
-@router.post("/login", response_model=APIResponse[UserOut])
+@router.post("/login", response_model_exclude={"data": {"password"}}, response_model=APIResponse[UserOut])
 async def login_agent(user_data: UserLogin = Body(
         openapi_examples={
             "agent_login": {
@@ -99,8 +100,10 @@ async def login_agent(user_data: UserLogin = Body(
     )
 ):
     items = await authenticate_agent(user_data=user_data)
-    items.password=""
-    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+
+    if items.admin_approved==True:
+        return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+    else: raise HTTPException(status_code=409,detail="Account hasn't been approved by admin yet please wait until your account has been approved")
 
 
 

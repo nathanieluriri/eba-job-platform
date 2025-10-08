@@ -9,6 +9,7 @@ from pydantic import BaseModel, EmailStr, model_validator
 
 class UserBase(BaseModel):
     # Shared fields
+    admin_approved:Optional[bool]=False
     full_name: str
     email: EmailStr
     password: str | bytes
@@ -116,7 +117,8 @@ class UserCreate(UserBase):
         self.password=hash_password(self.password)
         return self
 class UserUpdate(BaseModel):
-    # Add other fields here 
+    # Add other fields here
+    admin_approved:Optional[bool]=None 
     password:Optional[str | bytes]=None
     last_updated: int = Field(default_factory=lambda: int(time.time()))
     @model_validator(mode='after')

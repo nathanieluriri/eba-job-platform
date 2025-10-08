@@ -83,6 +83,7 @@ async def list_clients(
     response_model_exclude_none=True,
     dependencies=[Depends(verify_client_token)],
     response_model=APIResponse[UserOut],
+     response_model_exclude={"data": {"password"}},
     description=(
         "Retrieve the profile information of the currently authenticated **Client**. "
         "This endpoint uses the provided client token to identify the requesting user "
@@ -101,6 +102,7 @@ async def get_my_clients(token: accessTokenOut = Depends(verify_client_token)):
 @router.post(
     "/login",
     response_model=APIResponse[UserOut],
+     response_model_exclude={"data": {"password"}},
     description=(
         "Authenticate a user (client role) with their login credentials. "
         "If the credentials are valid, this endpoint returns the user profile "
@@ -124,7 +126,9 @@ async def login_client(
     )
 ):
     items = await authenticate_client(user_data=user_data)
-    return APIResponse(status_code=200, data=items, detail="Login successful")
+    if items.admin_approved==True:
+        return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+    else: raise HTTPException(status_code=409,detail="Account hasn't been approved by admin yet please wait until your account has been approved")
 
 @router.post(
     "/get-reset-token",

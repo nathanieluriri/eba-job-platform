@@ -117,7 +117,7 @@ async def get_my_users(
 
 
 
-@router.post("/signup", response_model_exclude={"data": {"password"}},response_model_exclude_none=True, response_model=APIResponse[UserOut])
+@router.post("/signup", response_model_exclude={"data": {"password"}},response_model_exclude_none=True, response_model=APIResponse[str])
 async def signup_new_user(
     user_data: Annotated[
         UserBase,
@@ -185,7 +185,7 @@ async def signup_new_user(
         **user_data_dict
     )
     items = await add_user(user_data=new_user)
-    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+    return APIResponse(status_code=200, data="Admin has to Approve account before you can use it. ", detail="Fetched successfully")
 
 @router.post("/login", response_model_exclude={"data": {"password"}}, response_model_exclude_none=True,response_model=APIResponse[UserOut])
 async def login_user(
@@ -229,8 +229,9 @@ async def login_user(
     items = await authenticate_user(user_data=user_data)
     # The `authenticate_user` function should raise an HTTPException 
     # (e.g., 401 Unauthorized) on failure.
-    
-    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+    if items.admin_approved==True:
+        return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+    else: raise HTTPException(status_code=409,detail="Account hasn't been approved by admin yet please wait until your account has been approved")
 
 
 
