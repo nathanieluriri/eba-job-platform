@@ -1,7 +1,7 @@
 # ============================================================================
-#CLIENT SCHEMA 
+#APPLICATIONS SCHEMA 
 # ============================================================================
-# This file was auto-generated on: 2025-09-24 23:29:54 WAT
+# This file was auto-generated on: 2025-10-08 23:21:10 WAT
 # It contains Pydantic classes  database
 # for managing attributes and validation of data in and out of the MongoDB database.
 #
@@ -11,35 +11,29 @@ from schemas.imports import *
 from pydantic import Field
 import time
 
-class ClientBase(BaseModel):
-    email: EmailStr
-    password: str | bytes   
-    phone_number: str
-    certificate_url: List[str]
-    video_url: str
-    personality_url: str
-    company_name: str 
-    company_email:str 
-    company_address: str
-    full_name: str
-    services: List[Skills]
-    client_reason_for_signing_up: ClientReasonForSignUp
-    client_need_agent_work_hours_to_be: ClientNeedAgentWorkHoursToBe
-
-
-
-class ClientCreate(ClientBase):
+class ApplicationsBase(BaseModel):
     # Add other fields here 
+    job_id:str
+    proposal:str
+    
+    
+
+class ApplicationsCreate(ApplicationsBase):
+    # Add other fields here 
+    proposal_status:ProposalState
+    agent_id:str
     date_created: int = Field(default_factory=lambda: int(time.time()))
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
-class ClientUpdate(BaseModel):
+class ApplicationsUpdate(BaseModel):
     # Add other fields here 
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
-class ClientOut(ClientBase):
+class ApplicationsOut(ApplicationsBase):
     # Add other fields here 
     id: Optional[str] =None
+    proposal_status:ProposalState
+    agent_id:str
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
     

@@ -149,7 +149,7 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
         content=APIResponse(
             status_code=exc.status_code,
             data=None,
-            detail=exc.detail,
+            detail=str(exc.detail),
         ).dict()
     )
 

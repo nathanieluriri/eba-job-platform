@@ -13,21 +13,22 @@ import time
 
 class AgentBase(BaseModel):
     email: EmailStr
+    password: str | bytes
     full_name:str
     phone_number: str
     certificate_url: List[str]
     video_url: str
     personality_url: str
-    primary_area_of_expertise: Optional[Skills] = None
-    years_of_experience: Optional[int] = None
-    three_most_commonly_used_tools_or_platforms: Optional[List[str]] = None
-    available_hours_agent_can_commit: Optional[AvailableHoursAgentCanCommit] = None
-    time_zone: Optional[UTCOffsets] = None
-    portfolio_link: Optional[str] = None
-    is_agent_open_to_calls_and_video_meetings: Optional[bool] = None
-    does_agent_have_working_computer: Optional[bool] = None
-    does_agent_have_stable_internet: Optional[bool] = None
-    is_agent_comfortable_with_time_tracking_tools: Optional[bool] = None
+    primary_area_of_expertise: Skills 
+    years_of_experience: int 
+    three_most_commonly_used_tools_or_platforms: List[str] 
+    available_hours_agent_can_commit: AvailableHoursAgentCanCommit
+    time_zone: UTCOffsets 
+    portfolio_link: str 
+    is_agent_open_to_calls_and_video_meetings: bool 
+    does_agent_have_working_computer: bool 
+    does_agent_have_stable_internet: bool 
+    is_agent_comfortable_with_time_tracking_tools: bool 
     
 class AgentCreate(AgentBase):
     # Add other fields here 

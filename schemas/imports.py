@@ -208,3 +208,9 @@ class PasswordResetInStep2(BaseModel):
     reset_token:str
     otp:str
     new_password:str
+
+
+class ProposalState(str,Enum):
+    pending_review = "pending_review"
+    accepted="accepted"
+    rejected="rejected"

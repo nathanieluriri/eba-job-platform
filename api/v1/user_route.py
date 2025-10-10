@@ -1,6 +1,7 @@
 
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from typing import List,Annotated
+from pydantic import ValidationError
 from schemas.response_schema import APIResponse
 from schemas.tokens_schema import accessTokenOut
 from schemas.user_schema import (
@@ -14,6 +15,12 @@ from schemas.user_schema import (
     UserRolesBase,
     UserLogin
 )
+from schemas.agent import (
+    AgentBase
+)
+from schemas.client import(
+    ClientBase
+)
 from services.user_service import (
     add_user,
     remove_user,
@@ -24,6 +31,7 @@ from services.user_service import (
     refresh_user_tokens_reduce_number_of_logins,
 
 )
+from services.utils import format_pydantic_errors
 from security.auth import verify_token,verify_token_to_refresh
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -148,6 +156,7 @@ async def signup_new_user(
                     "description": "Example payload for an **Agent** registering on the platform.",
                     "value": {
                         "email": "agent@example.com",
+                        "full_name": "Alice Johnson",
                         "password": "agentpassword456",
                         "role": "agent",
                         "phone_number": "+1987654321",
@@ -174,12 +183,27 @@ async def signup_new_user(
         ),
     ]
 ):
-    if user_data.role == UserRolesBase.client:
-        userRole = UserRoles.client
-    elif user_data.role == UserRolesBase.agent:
-        userRole = UserRoles.agent        
-    user_data_dict = user_data.model_dump() 
-    user_data_dict.pop('role')
+    try:
+        if user_data.role == UserRolesBase.client:
+            user = ClientBase(**user_data.model_dump()) # Pydantic ValidationError raised here
+            userRole = UserRoles.client
+        elif user_data.role == UserRolesBase.agent:
+            user = AgentBase(**user_data.model_dump()) # Pydantic ValidationError raised here
+            userRole = UserRoles.agent
+    except ValidationError as e:
+        # **This explicit try/except is usually NOT necessary in FastAPI**
+        # But if you want a custom 422 format or need to log, you'd handle it here.
+        # Otherwise, the error bubbles up and FastAPI handles it automatically.
+        readable_detail = format_pydantic_errors(e.errors())
+        raise HTTPException(
+            status_code=422,
+           
+            detail= readable_detail# e.errors() provides the structured pydantic error list
+        )
+
+        
+    user_data_dict = user.model_dump() 
+
     new_user = UserCreate(
         role=userRole,
         **user_data_dict
@@ -231,7 +255,7 @@ async def login_user(
     # (e.g., 401 Unauthorized) on failure.
     if items.admin_approved==True:
         return APIResponse(status_code=200, data=items, detail="Fetched successfully")
-    else: raise HTTPException(status_code=409,detail="Account hasn't been approved by admin yet please wait until your account has been approved")
+    else: raise HTTPException(status_code=403,detail="Account hasn't been approved by admin yet please wait until your account has been approved")
 
 
 

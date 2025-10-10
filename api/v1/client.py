@@ -42,6 +42,7 @@ router = APIRouter(prefix="/clients", tags=["Clients"])
     "/{start}/{stop}", 
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
+       response_model_exclude={"data": {"__all__": {"password"}}},
     dependencies=[Depends(verify_token)]
 )
 async def list_clients(
