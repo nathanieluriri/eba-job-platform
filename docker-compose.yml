@@ -40,8 +40,7 @@ services:
   mongo:
     image: mongo:6.0
     restart: always
-    ports:
-      - "27017:27017"
+    
     volumes:
       - mongo_data:/data/db
 
@@ -49,8 +48,7 @@ services:
     image: redis:7-alpine
     restart: always
     command: ["redis-server", "--appendonly", "yes"]   # 👈 force primary, no replica
-    ports:
-      - "6379:6379"
+    
     volumes:
       - redis_data:/data
 
