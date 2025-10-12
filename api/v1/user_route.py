@@ -32,14 +32,14 @@ from services.user_service import (
 
 )
 from services.utils import format_pydantic_errors
-from security.auth import verify_token,verify_token_to_refresh
+from security.auth import verify_admin_token,verify_token_to_refresh,verify_token
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get(
     "/{start}/{stop}", 
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
-    dependencies=[Depends(verify_token)],
+    dependencies=[Depends(verify_admin_token)],
     response_model_exclude={"data": {"__all__": {"password"}}},
 )
 async def list_users(

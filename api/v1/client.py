@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from core.redis_cache import cache_with_expiry, get_cached_value
 from services.utils import generate_random_string
 from typing import List,Annotated
-from security.auth import verify_token
+
 from schemas.response_schema import APIResponse
 from schemas.client import (
     ClientCreate,
@@ -29,7 +29,7 @@ from services.client_service import (
     update_client_by_id,
     authenticate_client
 )
-from security.auth import verify_client_token,accessTokenOut
+from security.auth import verify_client_token,accessTokenOut,verify_admin_token
 
 
 
@@ -43,7 +43,7 @@ router = APIRouter(prefix="/clients", tags=["Clients"])
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
        response_model_exclude={"data": {"__all__": {"password"}}},
-    dependencies=[Depends(verify_token)]
+    dependencies=[Depends(verify_admin_token)]
 )
 async def list_clients(
     # Use Path and Query for explicit documentation/validation of GET parameters
