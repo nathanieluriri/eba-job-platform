@@ -87,7 +87,7 @@ async def approve_users_either_client_or_agents(
     # Use Path and Query for explicit documentation/validation of GET parameters
     user_id: Annotated[
         str,
-        Path(ge=0, description="user id.")
+        Path(description="user id. could be a user id for any role client or agent")
     ] , 
     
 ):
