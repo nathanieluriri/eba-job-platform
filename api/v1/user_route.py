@@ -27,7 +27,7 @@ from services.user_service import (
     retrieve_users,
     authenticate_user,
     retrieve_user_by_user_id,
-    update_user,
+    update_user_by_id,
     refresh_user_tokens_reduce_number_of_logins,
 
 )
@@ -72,6 +72,44 @@ async def list_users(
     
     # Using the hardcoded values from your original code:
     items = await retrieve_users(start=0, stop=100)
+    
+    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+
+
+@router.patch(
+    "/{user_id}/approve", 
+    response_model=APIResponse[List[UserOut]],
+    response_model_exclude_none=True,
+    dependencies=[Depends(verify_admin_token)],
+    response_model_exclude={"data": {"__all__": {"password"}}},
+)
+async def approve_users_either_client_or_agents(
+    # Use Path and Query for explicit documentation/validation of GET parameters
+    user_id: Annotated[
+        str,
+        Path(ge=0, description="user id.")
+    ] , 
+    
+):
+    """
+    **ADMIN ONLY:** Approves any user using user id.
+
+    **Authorization:** Requires a **valid Access Token** (Admin role) in the 
+    `Authorization: Bearer <token>` header.
+
+    ### Examples (Illustrative URLs):
+
+    * **Approve user:** `/users/034910212/approve` 
+
+    """
+    
+    # Note: The code below overrides the path parameters with hardcoded defaults (0, 100).
+    # You should typically use the passed parameters: 
+    # items = await retrieve_users(start=start, stop=stop)
+    
+    # Using the hardcoded values from your original code:
+    data =UserUpdate(admin_approved=True)
+    items = await update_user_by_id(user_id=user_id,user_data=data)
     
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
