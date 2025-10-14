@@ -78,7 +78,7 @@ async def list_users(
 
 @router.patch(
     "/{user_id}/approve", 
-    response_model=APIResponse[List[UserOut]],
+    response_model=APIResponse[UserOut],
     response_model_exclude_none=True,
     dependencies=[Depends(verify_admin_token)],
     response_model_exclude={"data": {"__all__": {"password"}}},
