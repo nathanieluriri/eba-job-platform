@@ -167,14 +167,18 @@ async def health_check():
 from api.v1.admin_route import router as v1_admin_route_router
 from api.v1.agent import router as v1_agent_router
 from api.v1.alerts import router as v1_alerts_router
+from api.v1.applications import router as v1_applications_router
 from api.v1.client import router as v1_client_router
 from api.v1.jobs import router as v1_jobs_router
+from api.v1.logs import router as v1_logs_router
 from api.v1.user_route import router as v1_user_route_router
 
 app.include_router(v1_admin_route_router, prefix='/v1')
 app.include_router(v1_agent_router, prefix='/v1')
 app.include_router(v1_alerts_router, prefix='/v1')
+app.include_router(v1_applications_router, prefix='/v1')
 app.include_router(v1_client_router, prefix='/v1')
 app.include_router(v1_jobs_router, prefix='/v1')
+app.include_router(v1_logs_router, prefix='/v1')
 app.include_router(v1_user_route_router, prefix='/v1')
 # --- auto-routes-end ---
