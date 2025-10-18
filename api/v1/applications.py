@@ -101,7 +101,7 @@ async def get_my_applicationss(id: str = Query(..., description="applications ID
     return APIResponse(status_code=200, data=items, detail="applicationss items fetched")
 
 
-@router.post("/")
+@router.post("/apply")
 async def agent_applying_for_job(application_data:ApplicationsBase, token: accessTokenOut = Depends(verify_agent_token),):
     application = ApplicationsCreate(**application_data.model_dump(),agent_id=token.userId,proposal_status=ProposalState.pending_review)
     item = await add_applications(applications_data=application)
