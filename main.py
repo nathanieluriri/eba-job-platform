@@ -11,7 +11,16 @@ from repositories.tokens_repo import get_access_tokens_no_date_check
 from limits import parse
 import time   
 import os
- 
+from contextlib import asynccontextmanager
+from core.scheduler import scheduler
+
+
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+    
 
 
 class RequestTimingMiddleware(BaseHTTPMiddleware):
@@ -45,7 +54,7 @@ redis_url = os.getenv("CELERY_BROKER_URL") or os.getenv("REDIS_URL") \
 
     
 # Create the FastAPI app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(RequestTimingMiddleware)
 # Setup limiter
 storage = RedisStorage(redis_url)

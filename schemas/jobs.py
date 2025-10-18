@@ -44,6 +44,7 @@ class JobsUpdate(BaseModel):
     skills_needed:Optional[Skills]=None
     category: Optional[JobCatgeries]=None
     admin_approved:Optional[bool] =None
+    rejection_reason:Optional[str]=None
     break_down:Optional[PriceBreakDown]=None 
     status:Optional[JobStatus]=None 
     last_updated: int = Field(default_factory=lambda: int(time.time()))

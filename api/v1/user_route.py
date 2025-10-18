@@ -1,6 +1,8 @@
 
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from typing import List,Annotated
+from datetime import datetime,timedelta
+from core.scheduler import scheduler
 from pydantic import ValidationError
 from schemas.response_schema import APIResponse
 from schemas.tokens_schema import accessTokenOut
@@ -13,7 +15,9 @@ from schemas.user_schema import (
     UserRoleBody,
     UserRoles,
     UserRolesBase,
-    UserLogin
+    UserLogin,
+    UserRejection
+    
 )
 from schemas.agent import (
     AgentBase
@@ -76,6 +80,68 @@ async def list_users(
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
 
+
+@router.patch(
+    "/{user_id}/reject", 
+    response_model=APIResponse[UserOut],
+    response_model_exclude_none=True,
+    dependencies=[Depends(verify_admin_token)],
+    response_model_exclude={"data": {"__all__": {"password"}}},
+)
+
+async def reject_users_either_client_or_agents(
+    # Use Path and Query for explicit documentation/validation of GET parameters
+
+    user_id: Annotated[
+        str,
+        Path(description="user id. could be a user id for any role client or agent")
+    ] , 
+    
+        user:UserRejection=Body(
+        openapi_examples={
+            "reject_user": {
+                "summary": "Reject user Example ",
+                "description": (
+                    "Example payload for an **Admin** rejecting a user from the platform. "
+                    "The admin sets `admin_approved` to `false` and states reasons for rejection, "
+                   
+                    "⚠️**REQUIRES ADMIN TOKENS**"
+                ),
+                "value": {
+                    "admin_approved": False,
+                    "rejection_reason": "This user doesn't meet the expectation needed on the platform",
+                },
+            }
+        }),
+    
+):
+    """
+    **ADMIN ONLY:** Approves any user using user id.
+
+    **Authorization:** Requires a **valid Access Token** (Admin role) in the 
+    `Authorization: Bearer <token>` header.
+
+    ### Examples (Illustrative URLs):
+
+    * **Reject user:** `/users/034910212/reject` 
+
+    """
+    
+   
+    user_data =await retrieve_user_by_user_id(id=user_id)
+    if user_data.admin_approved!=True:
+        data =UserUpdate(admin_approved=False,rejection_reason=user.rejection_reason)
+        items = await update_user_by_id(user_id=user_id,user_data=data)
+        
+        remove_time = datetime.now + timedelta(days=3)
+        scheduler.add_job(remove_user, "date", run_date=remove_time, args=[user_id])
+        return APIResponse(status_code=200, data=items, detail="Rejected user registration successfully")
+    else: return APIResponse(status_code=400, data=user_data, detail="Failed to reject user registration successfully because user has already been approved")
+
+
+
+
+
 @router.patch(
     "/{user_id}/approve", 
     response_model=APIResponse[UserOut],
@@ -111,7 +177,7 @@ async def approve_users_either_client_or_agents(
     data =UserUpdate(admin_approved=True)
     items = await update_user_by_id(user_id=user_id,user_data=data)
     
-    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+    return APIResponse(status_code=200, data=items, detail="Approved user registration successfully")
 
 
 @router.get(
@@ -397,8 +463,10 @@ async def delete_user_account(
     The user ID is extracted from the valid Access Token in the Authorization header.
     No request body is required.
     """
-    result = await remove_user(user_id=token.userId)
     
+    
+    remove_time = datetime.now + timedelta(hours=2)
+    scheduler.add_job(remove_user, "date", run_date=remove_time, args=[token.userId])
     # The 'result' is assumed to be a standard FastAPI response object or a dict/model 
     # that is automatically converted to a response.
-    return result
+    return APIResponse(status_code=200,details="account will be deleted")

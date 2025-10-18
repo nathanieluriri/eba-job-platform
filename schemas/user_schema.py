@@ -118,7 +118,8 @@ class UserCreate(UserBase):
         return self
 class UserUpdate(BaseModel):
     # Add other fields here
-    admin_approved:Optional[bool]=None 
+    admin_approved:Optional[bool]=None
+    rejection_reason:Optional[str]=None 
     password:Optional[str | bytes]=None
     last_updated: int = Field(default_factory=lambda: int(time.time()))
     @model_validator(mode='after')

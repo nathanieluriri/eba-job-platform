@@ -28,3 +28,8 @@ async def list_logss():
 async def get_my_logss(id: str = Query(..., description="logs ID to fetch specific item")):
     items = await retrieve_logs_by_logs_id(id=id)
     return APIResponse(status_code=200, data=items, detail="logss items fetched")
+
+
+# TODO: Allow agents post logs
+# TODO: Allow clients to view logs for each job 
+# TODO: Allow clients to approve or reject logs for each job for each client 

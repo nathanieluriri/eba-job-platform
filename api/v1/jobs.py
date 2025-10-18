@@ -1,6 +1,8 @@
 
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from typing import List
+from datetime import datetime, timedelta
+from core.scheduler import scheduler
 from schemas.response_schema import APIResponse
 from security.auth import verify_client_token,accessTokenOut,verify_agent_token,verify_admin_token
 from schemas.jobs import (
@@ -135,6 +137,36 @@ async def post_new_jobs(
     items = await add_jobs(jobs_data=job_data)
     return APIResponse(status_code=200, data=items, detail="Job posted successfully")
 
+@router.post("/reject/{job_id}")
+async def reject_new_job_posting(
+    job_id: str,
+    job_data: JobsUpdate = Body(
+        openapi_examples={
+            "reject_job": {
+                "summary": "Reject Job Example ",
+                "description": (
+                    "Example payload for an **Admin** rejecting a job posting. "
+                    "The admin sets `admin_approved` to `false` and states reasons for rejection, "
+                   
+                    "⚠️**REQUIRES ADMIN TOKENS**"
+                ),
+                "value": {
+                    "admin_approved": False,
+                    "rejection_reason": "This user doesn't meet the expectation needed on the platform",
+                },
+            }
+        }
+    ),
+        token: accessTokenOut = Depends(verify_admin_token),
+):
+    if job_data.admin_approved != True:
+        data = JobsUpdate(admin_approved=False,rejection_reason=job_data.rejection_reason)
+        returned_job_stuff = await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
+        remove_time = datetime.now + timedelta(hours=20)
+        scheduler.add_job(remove_jobs, "date", run_date=remove_time, args=[job_id])
+        return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
+    elif job_data.admin_approved==True:
+        return APIResponse(status_code=400,detail="admin approved object is supposed to be false")
 
 @router.post("/approve/{job_id}")
 async def approve_new_job_posting(
@@ -161,7 +193,8 @@ async def approve_new_job_posting(
     ),
         token: accessTokenOut = Depends(verify_admin_token),
 ):
-    if job_data.admin_approved is True:
+    if job_data.admin_approved != True:
         data = JobsUpdate(admin_approved=True, break_down=job_data.break_down)
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
+        
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")

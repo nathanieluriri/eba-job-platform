@@ -16,6 +16,8 @@ class UserRoles(Enum):
     client=UserRoleBody(name="client",description="This user creates Job Postings")
     agent= UserRoleBody(name="agent",description="This user accepts job postings")
     
+class UserRejection(BaseModel):
+    rejection_reason:str
     
 class UserRolesBase(str,Enum):
     client="client"
