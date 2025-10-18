@@ -68,13 +68,18 @@ async def retrieve_applications_by_applications_id(id: str) -> ApplicationsOut:
     return result
 
 
-async def retrieve_applicationss(agent_id:str,start=0,stop=100) -> List[ApplicationsOut]:
+async def retrieve_applicationss(agent_id:str=None,start=0,stop=100,job_id:str=None) -> List[ApplicationsOut]:
     """Retrieves ApplicationsOut Objects in a list
 
     Returns:
         _type_: ApplicationsOut
     """
-    return await get_applicationss(start=start,stop=stop,filter_dict={"agent_id":agent_id})
+    if job_id:
+        return await get_applicationss(start=start,stop=stop,filter_dict={"job_id":job_id})
+    elif agent_id:
+        return await get_applicationss(start=start,stop=stop,filter_dict={"agent_id":agent_id})
+    else:
+        return await get_applicationss(start=start,stop=stop)
 
 
 async def update_applications_by_id(applications_id: str, applications_data: ApplicationsUpdate) -> ApplicationsOut:

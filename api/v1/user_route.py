@@ -36,7 +36,7 @@ from security.auth import verify_admin_token,verify_token_to_refresh,verify_toke
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get(
-    "/{start}/{stop}", 
+    "/", 
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
     dependencies=[Depends(verify_admin_token)],
@@ -46,11 +46,11 @@ async def list_users(
     # Use Path and Query for explicit documentation/validation of GET parameters
     start: Annotated[
         int,
-        Path(ge=0, description="The starting index (offset) for the list of users.")
+        Query( ge=0, description="The starting index (offset) for the list of users.")
     ] , 
     stop: Annotated[
         int, 
-        Path(gt=0, description="The ending index for the list of users (limit).")
+        Query( gt=0, description="The ending index for the list of users (limit).")
     ] 
 ):
     """

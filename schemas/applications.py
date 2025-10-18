@@ -26,9 +26,17 @@ class ApplicationsCreate(ApplicationsBase):
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
 class ApplicationsUpdate(BaseModel):
-    # Add other fields here 
+    # Add other fields here
+    proposal_status:ProposalState
+    rejection_reason:Optional[str]=None 
     last_updated: int = Field(default_factory=lambda: int(time.time()))
+class ApplicationAccept(BaseModel):
+    id:str
 
+    
+class ApplicationReject(BaseModel):
+    id:str
+    rejection_reason:str
 class ApplicationsOut(ApplicationsBase):
     # Add other fields here 
     id: Optional[str] =None

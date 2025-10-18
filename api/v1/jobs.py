@@ -23,25 +23,25 @@ from services.jobs_service import (
 
 router = APIRouter(prefix="/jobss", tags=["Jobss"])
 
-@router.get("/agent/available/{start}/{stop}",  description="⚠️ **REQUIRES AGENT TOKENS**", response_model=APIResponse[List[JobsOut]])
-async def list_jobss_agent_qualifies_for(start:int=0,stop:int=100,token:accessTokenOut = Depends(verify_agent_token)):
-    items = await retrieve_jobss_for_specific_agents(start=start,stop=stop)
+@router.get("/agent/available/",  description="⚠️ **REQUIRES AGENT TOKENS**", response_model=APIResponse[List[JobsOut]])
+async def list_jobss_agent_qualifies_for(start:int= Query(...,  description="where to start the query from usually 0 used to return a list of the item"),stop:int= Query(...,  description="where to end the query at usually ends withs 100 used to return a list of the item"),token:accessTokenOut = Depends(verify_agent_token)):
+    items = await retrieve_jobss_for_specific_agents(agent_id=token.userId,start=start,stop=stop)
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
-@router.get("/client/created/{start}/{stop}",description="⚠️**REQUIRES CLIENT TOKENS**", response_model=APIResponse[List[JobsOut]])
-async def list_jobss_client_made(start:int=0,stop:int=100,token:accessTokenOut = Depends(verify_client_token)):
+@router.get("/client/created/",description="⚠️**REQUIRES CLIENT TOKENS**", response_model=APIResponse[List[JobsOut]])
+async def list_jobss_client_made(start:int= Query(...,  description="where to start the query from usually 0 used to return a list of the item"),stop:int= Query(...,  description="where to end the query at usually ends withs 100 used to return a list of the item"),token:accessTokenOut = Depends(verify_client_token)):
     items = await retrieve_jobss_for_specific_client(client_id=token.userId,start=start,stop=stop)
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
 
 
 @router.get(
-    "/admin/{start}/{stop}",
+    "/admin/",
     description="⚠️**REQUIRES ADMIN TOKENS**",
     response_model=APIResponse[List[JobsOut]]
 )
 async def list_jobss(
-    start: int = Path(
+    start: int = Query(
         
         description="Start index (default: 0)",
         examples={
@@ -52,7 +52,7 @@ async def list_jobss(
             }
         }
     ),
-    stop: int = Path(
+    stop: int = Query(
         description="Stop index (default: 100)",
         examples={
             "example_stop": {

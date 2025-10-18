@@ -68,13 +68,15 @@ async def retrieve_jobs_by_jobs_id(id: str) -> JobsOut:
     return result
 
 
-async def retrieve_jobss(start=0,stop=100) -> List[JobsOut]:
+async def retrieve_jobss(start=0,stop=100,filter:dict=None) -> List[JobsOut]:
     """Retrieves JobsOut Objects in a list
 
     Returns:
         _type_: JobsOut
     """
-    return await get_jobss(start=start,stop=stop)
+    if filter:
+        return await get_jobss(start=start,stop=stop,filter_dict=filter)
+    else: return await get_jobss(start=start,stop=stop)
 
 
 async def update_jobs_by_id(jobs_id: str, jobs_data: JobsUpdate) -> JobsOut:

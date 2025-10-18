@@ -36,7 +36,7 @@ router = APIRouter(prefix="/agents", tags=["Agents"])
 
 
 @router.get(
-    "/{start}/{stop}", 
+    "/", 
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
        response_model_exclude={"data": {"__all__": {"password"}}},
@@ -46,12 +46,12 @@ async def list_agents(
     # Use Path and Query for explicit documentation/validation of GET parameters
     start: Annotated[
         int,
-        Path(ge=0, description="The starting index (offset) for the list of users.")
+        Query(ge=0, description="The starting index (offset) for the list of users.")
     ] , 
     stop: Annotated[
         int, 
-        Path(gt=0, description="The ending index for the list of users (limit).")
-    ] 
+        Query(gt=0, description="The ending index for the list of users (limit).")
+    ] =100
 ):
     """
     **ADMIN ONLY:** Retrieves a paginated list of all registered users.
@@ -61,9 +61,9 @@ async def list_agents(
 
     ### Examples (Illustrative URLs):
 
-    * **First Page:** `/users/0/50` (Start at index 0, retrieve up to 50 users)
-    * **Second Page:** `/users/50/100` (Start at index 50, retrieve up to 50 users)
-    * **Default:** `/users/0/100` (Default behavior if parameters are omitted or set to default)
+    * **First Page:** `/users?start=0&stop=50`
+    * **Second Page:** `/users?start=50&stop=100`
+    * **Default:** `/users` (Defaults to start=0, stop=100)
     """
     
     # Note: The code below overrides the path parameters with hardcoded defaults (0, 100).
