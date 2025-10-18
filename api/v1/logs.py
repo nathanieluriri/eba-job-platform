@@ -32,4 +32,5 @@ async def get_my_logss(id: str = Query(..., description="logs ID to fetch specif
 
 # TODO: Allow agents post logs
 # TODO: Allow clients to view logs for each job 
-# TODO: Allow clients to approve or reject logs for each job for each client 
+# TODO: Allow clients to approve for each job for each client 
+# TODO: Allow clients to reject logs for each job for each client 

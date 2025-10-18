@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from limits.strategies import FixedWindowRateLimiter
+from datetime import datetime,timedelta
 from limits.storage import RedisStorage
 import math
 from schemas.response_schema import APIResponse
@@ -18,8 +19,11 @@ from core.scheduler import scheduler
 @asynccontextmanager
 async def lifespan(app:FastAPI):
     scheduler.start()
-    yield
-    scheduler.shutdown()
+    try:
+        yield
+    finally:
+        scheduler.shutdown()
+    
     
 
 
@@ -162,9 +166,16 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
         ).dict()
     )
 
+async def test_scheduler(message):
+    print(message)
 # Simple test route
+
+   
 @app.get("/")
 def read_root():
+    run_time = datetime.now() + timedelta(seconds=20)
+    scheduler.add_job(test_scheduler,"date",run_date=run_time,args=[f"test message {run_time}"],misfire_grace_time=31536000)
+    # scheduler.add_job(test_scheduler,"date",run_date=run_time,args=[f"test message {run_time}"])
     return {"message": "Hello from FasterAPI!"}
 
 # Health check route
