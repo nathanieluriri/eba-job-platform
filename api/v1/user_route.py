@@ -185,37 +185,12 @@ async def approve_users_either_client_or_agents(
 @router.get(
     "/me", 
     response_model=APIResponse[UserOut],
-    dependencies=[Depends(verify_token)],
     response_model_exclude_none=True,
      response_model_exclude={"data": {"password"}},
 )
 async def get_my_users(
     token: accessTokenOut = Depends(verify_token),
-    # Using Body to include openapi_examples for documentation purposes, 
-    # even though the actual body is empty.
-    _body: Annotated[
-        dict,
-        Body(
-            openapi_examples={
-                "successful_profile_fetch": {
-                    "summary": "Successful Profile Retrieval",
-                    "description": (
-                        "A successful request **requires no body** and relies on a **valid, non-expired Access Token** "
-                        "in the `Authorization: Bearer <token>` header to identify the user (via `token.userId`)."
-                    ),
-                    "value": {},  # Explicitly empty body
-                },
-                "unauthenticated_request": {
-                    "summary": "Unauthenticated Request (Missing Token)",
-                    "description": (
-                        "This scenario represents a request where the **Access Token is missing or malformed**. "
-                        "The `verify_token` dependency should intercept this and return a **401 Unauthorized** error."
-                    ),
-                    "value": {},  # Explicitly empty body
-                },
-            }
-        ),
-    ] = {}, # Default empty dictionary for the body
+
 ):
     """
     Retrieves the profile information for the currently authenticated user.
