@@ -59,6 +59,9 @@ services:
     environment:
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+    - .:/app
+    working_dir: /app
     depends_on:
       - redis
       - worker
