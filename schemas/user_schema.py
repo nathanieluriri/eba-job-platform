@@ -4,7 +4,7 @@ import time
 from security.hash import hash_password
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr, model_validator
-
+from schemas.settings import SettingsBase,SettingsOut,SettingsUpdate
 
 
 class UserBase(BaseModel):
@@ -18,6 +18,7 @@ class UserBase(BaseModel):
     certificate_url: List[str]
     video_url: str
     personality_url: str
+    settings: SettingsBase = Field(default_factory=SettingsBase)
 
     # Client fields
     company_name: Optional[str] = None
@@ -106,7 +107,9 @@ class UserRefresh(BaseModel):
     refresh_token:str
     pass
 
-
+class UserUpdateRequest(BaseModel):
+    full_name: Optional[str]=None
+    settings:Optional[SettingsUpdate]=None
 class UserCreate(UserBase):
     # Add other fields here
     role:UserRoles 
@@ -116,8 +119,11 @@ class UserCreate(UserBase):
     def obscure_password(self):
         self.password=hash_password(self.password)
         return self
+    
 class UserUpdate(BaseModel):
     # Add other fields here
+    full_name: Optional[str]=None
+    settings:Optional[SettingsUpdate]=None
     admin_approved:Optional[bool]=None
     rejection_reason:Optional[str]=None 
     password:Optional[str | bytes]=None
@@ -127,6 +133,7 @@ class UserUpdate(BaseModel):
         if self.password:
             self.password=hash_password(self.password)
             return self
+        
 class UserOut(UserBase):
     # Add other fields here 
     id: Optional[str] =None
@@ -136,6 +143,7 @@ class UserOut(UserBase):
     last_updated: Optional[int] = None
     refresh_token: Optional[str] =None
     access_token:Optional[str]=None
+    settings: SettingsBase = Field(default_factory=SettingsBase)
     @model_validator(mode='before')
     def set_dynamic_values(cls,values):
         if isinstance(values,dict):

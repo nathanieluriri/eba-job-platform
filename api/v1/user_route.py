@@ -16,7 +16,8 @@ from schemas.user_schema import (
     UserRoles,
     UserRolesBase,
     UserLogin,
-    UserRejection
+    UserRejection,
+    UserUpdateRequest
     
 )
 from schemas.agent import (
@@ -86,7 +87,7 @@ async def list_users(
     response_model=APIResponse[UserOut],
     response_model_exclude_none=True,
     dependencies=[Depends(verify_admin_token)],
-    response_model_exclude={"data": {"__all__": {"password"}}},
+    response_model_exclude={"data": {"password"}},
 )
 
 async def reject_users_either_client_or_agents(
@@ -148,7 +149,7 @@ async def reject_users_either_client_or_agents(
     response_model=APIResponse[UserOut],
     response_model_exclude_none=True,
     dependencies=[Depends(verify_admin_token)],
-    response_model_exclude={"data": {"__all__": {"password"}}},
+    response_model_exclude={"data": {"password"}},
 )
 async def approve_users_either_client_or_agents(
     # Use Path and Query for explicit documentation/validation of GET parameters
@@ -356,6 +357,8 @@ async def login_user(
     Upon success, returns the authenticated user data and an authentication token.
     """
     items = await authenticate_user(user_data=user_data)
+    
+    
     # The `authenticate_user` function should raise an HTTPException 
     # (e.g., 401 Unauthorized) on failure.
     if items.admin_approved==True:
@@ -409,7 +412,7 @@ async def refresh_user_tokens(
                 },
             }
         ),
-    ],
+    ] ,
     token: accessTokenOut = Depends(verify_token_to_refresh)
 ):
     """
@@ -417,18 +420,83 @@ async def refresh_user_tokens(
 
     Requires an **expired access token** in the Authorization header and a **valid refresh token** in the body.
     """
+    try:
+        
+        
+        items = await refresh_user_tokens_reduce_number_of_logins(
+            user_refresh_data=user_data,
+            expired_access_token=token.accesstoken
+        )
+        
+        # Clears the password before returning, which is good practice.
     
-    items = await refresh_user_tokens_reduce_number_of_logins(
-        user_refresh_data=user_data,
-        expired_access_token=token.accesstoken
-    )
     
-    # Clears the password before returning, which is good practice.
-    items.password = ''
-    
-    return APIResponse(status_code=200, data=items, detail="users items fetched")
+        return APIResponse(status_code=200, data=items, detail="users items fetched")
+    except Exception as e:
+        raise HTTPException(status_code=500,  detail=f"{e}")
 
+@router.patch(
+    "/update",
+    response_model=APIResponse[UserOut],
+    response_model_exclude={"data": {"password"}},
 
+)
+async def update_user_details(
+    user_update: UserUpdateRequest=Body(
+            ...,
+            openapi_examples={
+                "update_full_name": {
+                    "summary": "Update User's Full Name",
+                    "description": (
+                        "Updates only the user's full name. "
+                        "The user's settings remain unchanged."
+                    ),
+                    "value": {"full_name": "Nathaniel Elo-Oghene Uriri"},
+                },
+                "update_settings": {
+                    "summary": "Update Notification Settings",
+                    "description": (
+                        "Updates only the user's notification preferences. "
+                        "Any unspecified fields remain at their current values."
+                    ),
+                    "value": {
+                        "settings": {
+                            "email_notifications": False,
+                            "push_notifications": False,
+                            "marketing_notifications": True,
+                        }
+                    },
+                },
+            }
+        ),
+    token: accessTokenOut = Depends(verify_token),
+):
+    """
+    Updates the user's details and notification settings.
+    Restricted fields like password, admin_approved, and rejection_reason
+    cannot be modified here.
+    """    
+
+    # ✅ Restrict disallowed fields
+    print(type(user_update))
+    if getattr(user_update, "admin_approved", None) is not None or getattr(user_update, "rejection_reason", None) is not None:
+        raise HTTPException(status_code=400, detail="You cannot modify admin approval fields.")
+
+    if getattr(user_update, "password", None) is not None:
+        raise HTTPException(status_code=400, detail="Use the password update endpoint to change your password.")
+
+    # ✅ Update DB record
+    try:
+        updated_user = await update_user_by_id(
+            user_id=token.userId,
+            user_data=user_update,
+        )
+
+        return APIResponse(status_code=200, data=updated_user, detail="User updated successfully")
+    except Exception as e:
+        raise HTTPException(status_code=500,detail=f"{e}")
+    
+    
 @router.delete("/account", dependencies=[Depends(verify_token)], response_model_exclude_none=True)
 async def delete_user_account(
     token: accessTokenOut = Depends(verify_token),

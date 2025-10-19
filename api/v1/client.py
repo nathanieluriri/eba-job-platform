@@ -168,10 +168,10 @@ async def send_reset_token(
     client = await retrieve_clients(filter={"email": user_data.email})
     if client:
         reset_token = generate_random_string()
-        cache_with_expiry(key=reset_token, value="123456", ttl=240)
+        cache_with_expiry(key=f"reset_token:{reset_token};email:{user_data.email}", value="123456", ttl=240)
         return APIResponse(
             status_code=200,
-            data=PasswordResetOutStep1(reset_token=reset_token),
+            data=PasswordResetOutStep1(reset_token=f"reset_token:{reset_token};email:{user_data.email}"),
             detail="Reset Token sent successfully",
         )
     else:
