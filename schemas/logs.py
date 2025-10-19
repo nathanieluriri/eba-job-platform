@@ -21,17 +21,21 @@ class LogsBase(BaseModel):
 
 class LogsCreate(LogsBase):
     # Add other fields here
-    user_id:str 
+    agent_id:str
+    client_approved:bool=Field(default=False) 
     date_created: int = Field(default_factory=lambda: int(time.time()))
     last_updated: int = Field(default_factory=lambda: int(time.time()))
-
+class LogReject(BaseModel):
+    rejection_reason:str
 class LogsUpdate(BaseModel):
-    # Add other fields here 
+    # Add other fields here
+    client_approved:Optional[bool]=None
+    rejection_reason:Optional[str]=None 
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
 class LogsOut(LogsBase):
     # Add other fields here
-    user_id:str 
+    agent_id:str 
     id: Optional[str] =None
     date_created: Optional[int] = None
     last_updated: Optional[int] = None

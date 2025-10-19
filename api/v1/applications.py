@@ -69,6 +69,7 @@ async def get_application_object_using_client_token( token:accessTokenOut=Depend
     if len(jobs)>0:
         print(jobs)  
         items = await retrieve_applications_by_applications_id(id=id)
+        
         return APIResponse(status_code=200, data=items, detail="applicationss items fetched")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
 
@@ -89,6 +90,7 @@ async def reject_agent_job_application(rejection_data:ApplicationReject,job_id:s
         print(jobs)
         update_data = ApplicationsUpdate(proposal_status=ProposalState.rejected,rejection_reason=rejection_data.rejection_reason) 
         item = await update_applications_by_id(applications_id=rejection_data.id,applications_data=update_data)
+        
         return APIResponse(status_code=200, data=item, detail="applications updated successfully")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
 

@@ -144,6 +144,7 @@ async def send_reset_token(
     client = await retrieve_agents(filter={"email": user_data.email})
     if client:
         reset_token = generate_random_string()
+        # TODO: IMPLEMENT GENERATING AND SENDING OTP LOGIC USING CELERY AND SENDGRID FOR AGENT TO RESET PASSWORD
         cache_with_expiry(key=f"reset_token:{reset_token};email:{user_data.email}", value="123456", ttl=240)
         return APIResponse(
             status_code=200,
