@@ -58,11 +58,13 @@ async def get_jobss(filter_dict: dict = {},start=0,stop=100) -> List[JobsOut]:
             detail=f"An error occurred while fetching jobss: {str(e)}"
         )
 async def update_jobs(filter_dict: dict, jobs_data: JobsUpdate) -> JobsOut:
+    
     result = await db.jobss.find_one_and_update(
         filter_dict,
         {"$set": jobs_data.model_dump(exclude_none=True)},
         return_document=ReturnDocument.AFTER
     )
+
     returnable_result = JobsOut(**result)
     return returnable_result
 

@@ -25,7 +25,7 @@ from services.applications_service import (
 )
 from services.jobs_service import (
 
-    retrieve_jobss,
+    get_jobs,
     retrieve_jobs_by_jobs_id,
     update_jobs_by_id,
 )
@@ -41,10 +41,10 @@ async def list_all_job_applications_agent_has_ever_applied_for(start:int= Query(
 
 @router.get("/client/list", response_model=APIResponse[List[ApplicationsOut]])
 async def list_applications_clients_have_for_a_particular_job( job_id: str = Query(..., description="Job ID to fetch specific application item"),start:int= Query(..., description="where to start the query from usually 0 used to return a list of the item"),stop:int= Query(..., description="where to end the query at usually ends withs 100 used to return a list of the item"),token: accessTokenOut = Depends(verify_client_token),):
-    jobs  =await retrieve_jobss(start=0,stop=100,filter={"client_id":token.userId,"_id":ObjectId(job_id)})
-    if len(jobs)>0:
+    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
+    if jobs:
         print(jobs)    
-        items = await retrieve_applicationss(start=start,stop=stop,agent_id=token.userId)
+        items = await retrieve_applicationss(start=start,stop=stop,job_id=job_id)
         return APIResponse(status_code=200, data=items, detail="Fetched successfully")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
 
@@ -64,9 +64,9 @@ async def list_applications_for_a_particular_job( job_id: str = Query(..., descr
 
 @router.get("/client/me", response_model=APIResponse[ApplicationsOut])
 async def get_application_object_using_client_token( token:accessTokenOut=Depends(verify_client_token),id: str = Query(..., description="applications ID to fetch specific item"),job_id: str = Query(..., description="Job ID to fetch specific application item")):
-    jobs  =await retrieve_jobss(start=0,stop=100,filter={"client_id":token.userId,"_id":ObjectId(job_id)})
-    if len(jobs)>0:
-        print(jobs)  
+    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
+    if jobs:
+        print(jobs)    
         items = await retrieve_applications_by_applications_id(id=id)
         
         return APIResponse(status_code=200, data=items, detail="applicationss items fetched")
@@ -74,9 +74,9 @@ async def get_application_object_using_client_token( token:accessTokenOut=Depend
 
 @router.patch("/client/select-agent/{job_id}", response_model=APIResponse[ApplicationsOut],dependencies=[Depends(verify_client_token)])
 async def approve_agent_job_application(acceptance_data:ApplicationAccept,job_id:str,token:accessTokenOut=Depends(verify_client_token)):
-    jobs  =await retrieve_jobss(start=0,stop=100,filter={"client_id":token.userId,"_id":ObjectId(job_id)})
-    if len(jobs)>0:
-        print(jobs)
+    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
+    if jobs:
+        print(jobs)  
         update_data = ApplicationsUpdate(proposal_status=ProposalState.accepted) 
         item = await update_applications_by_id(applications_id=acceptance_data.id,applications_data=update_data)
         return APIResponse(status_code=200, data=item, detail="applications updated successfully")
@@ -84,9 +84,9 @@ async def approve_agent_job_application(acceptance_data:ApplicationAccept,job_id
 
 @router.patch("/client/reject-agent/{job_id}", response_model=APIResponse[ApplicationsOut],dependencies=[Depends(verify_client_token)])
 async def reject_agent_job_application(rejection_data:ApplicationReject,job_id:str,token:accessTokenOut=Depends(verify_client_token)):
-    jobs  =await retrieve_jobss(start=0,stop=100,filter={"client_id":token.userId,"_id":ObjectId(job_id)})
-    if len(jobs)>0:
-        print(jobs)
+    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
+    if jobs:
+        print(jobs)  
         update_data = ApplicationsUpdate(proposal_status=ProposalState.rejected,rejection_reason=rejection_data.rejection_reason) 
         item = await update_applications_by_id(applications_id=rejection_data.id,applications_data=update_data)
         
@@ -148,4 +148,4 @@ async def agent_applying_for_job(application_data: ApplicationsBase = Body(
     # TODO: ADD VERIFICATION HERE ONLY AN AGENT THAT HAS THE ACCURATE SKILLS CAN APPLY TO A JOB WITH THEIR SKILLS
     application = ApplicationsCreate(**application_data.model_dump(),agent_id=token.userId,proposal_status=ProposalState.pending_review)
     item = await add_applications(applications_data=application)
-    return APIResponse(status_code=200,data=item,details="Successfully applied for the Job")
+    return APIResponse(status_code=200,data=item,detail="Successfully applied for the Job")

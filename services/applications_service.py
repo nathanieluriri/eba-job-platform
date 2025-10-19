@@ -26,6 +26,9 @@ async def add_applications(applications_data: ApplicationsCreate) -> Application
     Returns:
         _type_: ApplicationsOut
     """
+    previous_applications = await get_applications(filter_dict={"agent_id":applications_data.agent_id,"job_id":applications_data.job_id})
+    if previous_applications:
+        raise HTTPException(status_code=409,detail="User has applied before")
     return await create_applications(applications_data)
 
 

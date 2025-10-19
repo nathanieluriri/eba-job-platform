@@ -49,9 +49,12 @@ async def get_my_logss(id: str = Query(..., description="logs ID to fetch specif
 async def client_endpoint_to_approve_logss(log_id: str, token: accessTokenOut = Depends(verify_client_token) ):
     # TODO: ADD VERIFICATION TO KNOW IF THIS CLIENT CAN APPROVE THE JOB
     try:
+ 
         update_data = LogsUpdate(client_approved=True)
+        
         new_logs= await update_logs_by_id(logs_id=log_id,logs_data=update_data)
-        return APIResponse(status_code=200,data=new_logs,details="Successfully  approved logs")
+        
+        return APIResponse(status_code=200,data=new_logs,detail="Successfully  approved logs")
     except Exception as e:
         raise HTTPException(status_code=500,detail=f"{e}")    
 
@@ -62,7 +65,7 @@ async def client_endpoint_to_reject_logss(log_id: str,log_rejection:LogReject, t
     try:
         update_data = LogsUpdate(client_approved=False,rejection_reason=log_rejection.rejection_reason)
         new_logs= await update_logs_by_id(logs_id=log_id,logs_data=update_data)
-        return APIResponse(status_code=200,data=new_logs,details="Successfully  approved logs")
+        return APIResponse(status_code=200,data=new_logs,detail="Successfully  approved logs")
     except Exception as e:
         raise HTTPException(status_code=500,detail=f"{e}") 
 
@@ -112,8 +115,8 @@ async def agent_posting_new_logss(log_data: LogsBase = Body(
 ), token: accessTokenOut = Depends(verify_agent_token) ):
     # TODO: ADD A VERIFICATION TO KNOW IF THIS USER IS ALLOWED TO POST LOGS FOR THIS JOB
     logs = LogsCreate(**log_data.model_dump(),agent_id=token.userId)
-    item = await add_logs(applications_data=logs)
-    return APIResponse(status_code=200,data=item,details="Successfully applied for the Job")
+    item = await add_logs(logs_data=logs)
+    return APIResponse(status_code=200,data=item,detail="Successfully Posted Job progress update (log) ")
 
 
  

@@ -193,7 +193,10 @@ async def approve_new_job_posting(
     ),
         token: accessTokenOut = Depends(verify_admin_token),
 ):
-    if job_data.admin_approved != True:
+    
+    old_data =await retrieve_jobs_by_jobs_id(id=job_id)
+    if old_data.admin_approved == False:
+        
         data = JobsUpdate(admin_approved=True, break_down=job_data.break_down)
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
         
