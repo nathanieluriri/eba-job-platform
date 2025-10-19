@@ -159,13 +159,14 @@ async def reject_new_job_posting(
     ),
         token: accessTokenOut = Depends(verify_admin_token),
 ):
-    if job_data.admin_approved != True:
+    old_data =await retrieve_jobs_by_jobs_id(id=job_id)
+    if old_data.admin_approved == False:
         data = JobsUpdate(admin_approved=False,rejection_reason=job_data.rejection_reason)
         returned_job_stuff = await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
         remove_time = datetime.now() + timedelta(hours=20)
         scheduler.add_job(remove_jobs, "date", run_date=remove_time, args=[job_id],misfire_grace_time=31536000)
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
-    elif job_data.admin_approved==True:
+    elif old_data.admin_approved==True:
         return APIResponse(status_code=400,detail="admin approved object is supposed to be false")
 
 @router.post("/approve/{job_id}")
@@ -201,3 +202,4 @@ async def approve_new_job_posting(
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
         
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
+    else: raise HTTPException(status_code=409,detail="admin has approved already")

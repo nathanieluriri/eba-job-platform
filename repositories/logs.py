@@ -58,7 +58,8 @@ async def get_logss(filter_dict: dict = {},start=0,stop=100) -> List[LogsOut]:
             detail=f"An error occurred while fetching logss: {str(e)}"
         )
 async def update_logs(filter_dict: dict, logs_data: LogsUpdate) -> LogsOut:
-    print(logs_data.model_dump(exclude=None))
+    print(logs_data.model_dump(exclude_none=True))
+   
     result = await db.logss.find_one_and_update(
         filter_dict,
         {"$set": logs_data.model_dump(exclude_none=True)},

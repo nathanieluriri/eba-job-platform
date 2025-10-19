@@ -39,7 +39,7 @@ async def get_my_logss(id: str = Query(..., description="logs ID to fetch specif
     items = await retrieve_logs_by_logs_id(id=id)
     return APIResponse(status_code=200, data=items, detail="logss items fetched")
 
-@router.get("/client/view", response_model=APIResponse[LogsOut])
+@router.get("/client/view",response_model_exclude=None, response_model=APIResponse[LogsOut])
 async def get_my_logss(id: str = Query(..., description="logs ID to fetch specific item"), token: accessTokenOut = Depends(verify_client_token) ):
     # TODO: ADD A VERIFICATION TO KNOW IF THIS USER IS ALLOWED TO VIEW THIS LOGS
     items = await retrieve_logs_by_logs_id(id=id)
@@ -47,27 +47,33 @@ async def get_my_logss(id: str = Query(..., description="logs ID to fetch specif
 
 @router.patch("/approve/{log_id}", response_model=APIResponse[LogsOut])
 async def client_endpoint_to_approve_logss(log_id: str, token: accessTokenOut = Depends(verify_client_token) ):
-    # TODO: ADD VERIFICATION TO KNOW IF THIS CLIENT CAN APPROVE THE JOB
+    # TODO: ADD VERIFICATION TO KNOW IF THIS CLIENT CAN APPROVE THE LOG
     try:
- 
+        log = await retrieve_logs_by_logs_id(id=log_id)
+    except Exception as e:
+        raise HTTPException(status_code=500,detail=f"{e}")
+    if (log.client_approved==False) and (log.rejection_reason==None):
         update_data = LogsUpdate(client_approved=True)
         
         new_logs= await update_logs_by_id(logs_id=log_id,logs_data=update_data)
         
         return APIResponse(status_code=200,data=new_logs,detail="Successfully  approved logs")
-    except Exception as e:
-        raise HTTPException(status_code=500,detail=f"{e}")    
+    elif(log.client_approved==True) and (log.rejection_reason==None): raise HTTPException(status_code=409,detail="Log already approved")
+    else: raise HTTPException(status_code=400,detail="Bad request")
 
 @router.patch("/reject/{log_id}", response_model=APIResponse[LogsOut])
 async def client_endpoint_to_reject_logss(log_id: str,log_rejection:LogReject, token: accessTokenOut = Depends(verify_client_token) ):
-    # TODO: ADD VERIFICATION TO KNOW IF THIS CLIENT CAN REJECT THE JOB
-    
+    # TODO: ADD VERIFICATION TO KNOW IF THIS CLIENT CAN REJECT THE LOG
     try:
+        log = await retrieve_logs_by_logs_id(id=log_id)
+    except Exception as e:
+        raise HTTPException(status_code=500,detail=f"{e}")
+    if (log.client_approved==False) and (log.rejection_reason==None):
         update_data = LogsUpdate(client_approved=False,rejection_reason=log_rejection.rejection_reason)
         new_logs= await update_logs_by_id(logs_id=log_id,logs_data=update_data)
         return APIResponse(status_code=200,data=new_logs,detail="Successfully  approved logs")
-    except Exception as e:
-        raise HTTPException(status_code=500,detail=f"{e}") 
+    elif(log.client_approved==False) and (log.rejection_reason!=None): raise HTTPException(status_code=409,detail="Log already rejected")
+    else: raise HTTPException(status_code=400,detail="Bad request")
 
 @router.post("/post", response_model=APIResponse[LogsOut])
 async def agent_posting_new_logss(log_data: LogsBase = Body(

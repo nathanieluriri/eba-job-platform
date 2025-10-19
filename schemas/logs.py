@@ -13,20 +13,16 @@ import time
 
 class LogsBase(BaseModel):
     job_id: str
-    client_approved: Optional[bool] = Field(default=False)
+    
     log_comment: str
     files: List[str]
     hours: int
     log_title: str
 
-    @model_validator(mode="after")
-    def force_client_approved_false(self):
-        self.client_approved = False
-        return self
-
 class LogsCreate(LogsBase):
     # Add other fields here
     agent_id:str
+    
     client_approved:bool=Field(default=False) 
     date_created: int = Field(default_factory=lambda: int(time.time()))
     last_updated: int = Field(default_factory=lambda: int(time.time()))
@@ -40,11 +36,12 @@ class LogsUpdate(BaseModel):
 
 class LogsOut(LogsBase):
     # Add other fields here
-    agent_id:str 
+    agent_id:str
+    client_approved:bool 
     id: Optional[str] =None
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
-    
+    rejection_reason:Optional[str]=None 
     @model_validator(mode='before')
     def set_dynamic_values(cls,values):
         values['id']= str(values.get('_id'))
