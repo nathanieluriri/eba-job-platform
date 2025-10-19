@@ -7,6 +7,7 @@ python-dotenv
 pydantic
 redis
 motor
+flower
 eventlet
 PyJWT==2.10.1
 pymongo==4.12.0
