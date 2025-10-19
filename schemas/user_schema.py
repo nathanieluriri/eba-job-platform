@@ -131,6 +131,7 @@ class UserOut(UserBase):
     # Add other fields here 
     id: Optional[str] =None
     role:dict
+    rejection_reason:Optional[str]=None 
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
     refresh_token: Optional[str] =None

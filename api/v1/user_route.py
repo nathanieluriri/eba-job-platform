@@ -134,7 +134,8 @@ async def reject_users_either_client_or_agents(
         items = await update_user_by_id(user_id=user_id,user_data=data)
         
         remove_time = datetime.now() + timedelta(days=3)
-        scheduler.add_job(remove_user, "date", run_date=remove_time, args=[user_id],misfire_grace_time=31536000)
+        if user_data.rejection_reason==None:
+            scheduler.add_job(remove_user, "date", run_date=remove_time, args=[user_id],misfire_grace_time=31536000)
         return APIResponse(status_code=200, data=items, detail="Rejected user registration successfully")
     else: return APIResponse(status_code=400, data=user_data, detail="Failed to reject user registration successfully because user has already been approved")
 
@@ -465,7 +466,7 @@ async def delete_user_account(
     """
     
     
-    remove_time = datetime.now() + timedelta(hours=2)
+    remove_time = datetime.now() + timedelta(minutes=2)
     scheduler.add_job(remove_user, "date", run_date=remove_time, args=[token.userId],misfire_grace_time=31536000)
     # The 'result' is assumed to be a standard FastAPI response object or a dict/model 
     # that is automatically converted to a response.

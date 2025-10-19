@@ -12,6 +12,7 @@ from repositories.tokens_repo import get_access_tokens_no_date_check
 from limits import parse
 import time   
 import os
+from celery_worker import celery_app
 from contextlib import asynccontextmanager
 from core.scheduler import scheduler
 
@@ -170,6 +171,10 @@ async def test_scheduler(message):
     print(message)
 # Simple test route
 
+@app.get("/test-celery")
+async def test_celery():
+    result = celery_app.send_task("celery_worker.test_scheduler", args=["Messageeee"])
+    return {"task_id": result.id}
    
 @app.get("/")
 def read_root():
