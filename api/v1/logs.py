@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, HTTPException, Query, status, Path,Depends
+from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from security.auth import accessTokenOut,verify_agent_token,verify_client_token,verify_admin_token
 from typing import List
 from schemas.response_schema import APIResponse
@@ -20,8 +20,15 @@ from services.logs_service import (
 
 router = APIRouter(prefix="/logss", tags=["Logss"])
 
-@router.get("/", response_model=APIResponse[List[LogsOut]])
-async def list_logss():
+@router.get("/agent/list/{job_id}", response_model=APIResponse[List[LogsOut]])
+async def list_logss(job_id:str,token: accessTokenOut = Depends(verify_agent_token)):
+    # TODO: ADD A VERIFICATION TO KNOW IF THIS USER IS ALLOWED TO VIEW THIS LOGS
+    items = await retrieve_logss()
+    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+
+@router.get("/client/list/{job_id}", response_model=APIResponse[List[LogsOut]])
+async def list_logss(job_id:str,token: accessTokenOut = Depends(verify_client_token)):
+    # TODO: ADD A VERIFICATION TO KNOW IF THIS USER IS ALLOWED TO VIEW THIS LOGS
     items = await retrieve_logss()
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
@@ -60,7 +67,49 @@ async def client_endpoint_to_reject_logss(log_id: str,log_rejection:LogReject, t
         raise HTTPException(status_code=500,detail=f"{e}") 
 
 @router.post("/post", response_model=APIResponse[LogsOut])
-async def agent_posting_new_logss(log_data:LogsBase, token: accessTokenOut = Depends(verify_agent_token) ):
+async def agent_posting_new_logss(log_data: LogsBase = Body(
+    ...,
+    openapi_examples={
+        "valid_log_entry": {
+            "summary": "✅ Valid log entry",
+            "description": (
+                "Submit a new work log for a job. The log includes title, "
+                "hours worked, optional file attachments, and a comment."
+                "\n\nNote: `client_approved` is always set to `false` on creation, "
+                "regardless of the input."
+            ),
+            "value": {
+                "job_id": "job_12345",
+                "log_comment": "Completed initial design and sent for review.",
+                "files": ["https://design_v1.png", "https://wireframes.pdf"],
+                "hours": 5,
+                "log_title": "Design Phase - Round 1"
+            },
+        },
+        "missing_fields": {
+            "summary": "🚫 Missing required fields",
+            "description": (
+                "Example of a request missing required fields like `job_id`, `hours`, or `log_title`. "
+                "This will trigger a validation error."
+            ),
+            "value": {
+                "log_comment": "Forgot to track time for the last session.",
+                "files": [],
+            },
+        },
+        "minimal_valid_log": {
+            "summary": "📝 Minimal valid log entry",
+            "description": "A minimal example with only required fields filled in.",
+            "value": {
+                "job_id": "job_98765",
+                "log_comment": "Bug fixes and testing.",
+                "files": [],
+                "hours": 2,
+                "log_title": "QA & Testing"
+            },
+        },
+    }
+), token: accessTokenOut = Depends(verify_agent_token) ):
     # TODO: ADD A VERIFICATION TO KNOW IF THIS USER IS ALLOWED TO POST LOGS FOR THIS JOB
     logs = LogsCreate(**log_data.model_dump(),agent_id=token.userId)
     item = await add_logs(applications_data=logs)

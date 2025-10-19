@@ -12,12 +12,17 @@ from pydantic import Field
 import time
 
 class LogsBase(BaseModel):
-    # Add other fields here
-    job_id:str
-    log_comment:str
-    files:List[Any]
-    hours:int
-    log_title:str 
+    job_id: str
+    client_approved: Optional[bool] = Field(default=False)
+    log_comment: str
+    files: List[str]
+    hours: int
+    log_title: str
+
+    @model_validator(mode="after")
+    def force_client_approved_false(self):
+        self.client_approved = False
+        return self
 
 class LogsCreate(LogsBase):
     # Add other fields here

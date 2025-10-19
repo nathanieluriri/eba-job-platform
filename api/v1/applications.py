@@ -1,5 +1,4 @@
-
-from fastapi import APIRouter, HTTPException, Query, status, Path,Depends
+from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from typing import List
 from bson import ObjectId
 from schemas.response_schema import APIResponse
@@ -104,7 +103,49 @@ async def get_my_applicationss(id: str = Query(..., description="applications ID
 
 
 @router.post("/apply")
-async def agent_applying_for_job(application_data:ApplicationsBase, token: accessTokenOut = Depends(verify_agent_token),):
+async def agent_applying_for_job(application_data: ApplicationsBase = Body(
+    ...,
+    openapi_examples={
+        "valid_application": {
+            "summary": "✅ Submit a valid application",
+            "description": (
+                "A freelancer applies to a job with a valid proposal. "
+                "The `job_id` must be the identifier of an existing job posting, "
+                "and the `proposal` should clearly explain the candidate’s approach or value."
+            ),
+            "value": {
+                "job_id": "job_abc123",
+                "proposal": (
+                    "Hi there, I have 5+ years of experience with similar projects. "
+                    "I can start immediately and deliver within your timeline. "
+                    "Looking forward to working with you!"
+                ),
+            },
+        },
+        "short_proposal": {
+            "summary": "⚠️ Too short proposal",
+            "description": (
+                "A minimal or low-effort proposal might be rejected depending on validation rules "
+                "or platform moderation policies."
+            ),
+            "value": {
+                "job_id": "job_xyz789",
+                "proposal": "I'm interested."
+            },
+        },
+        "missing_job_id": {
+            "summary": "🚫 Missing required field",
+            "description": (
+                "This example is missing the `job_id` field, which is required. "
+                "The API will return a validation error."
+            ),
+            "value": {
+                "proposal": "I have experience with similar tasks."
+            },
+        },
+    }
+), token: accessTokenOut = Depends(verify_agent_token),):
+    # TODO: ADD VERIFICATION HERE ONLY AN AGENT THAT HAS THE ACCURATE SKILLS CAN APPLY TO A JOB WITH THEIR SKILLS
     application = ApplicationsCreate(**application_data.model_dump(),agent_id=token.userId,proposal_status=ProposalState.pending_review)
     item = await add_applications(applications_data=application)
     return APIResponse(status_code=200,data=item,details="Successfully applied for the Job")
