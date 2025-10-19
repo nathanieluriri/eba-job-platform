@@ -71,6 +71,29 @@ async def retrieve_applications_by_applications_id(id: str) -> ApplicationsOut:
     return result
 
 
+
+async def retrieve_applications_by_applications_id_and_agent_id(id: str,agent_id:str) -> ApplicationsOut:
+    """Retrieves applications object based specific Id 
+
+    Raises:
+        HTTPException 404(not found): if  Applications not found in the db
+        HTTPException 400(bad request): if  Invalid applications ID format
+
+    Returns:
+        _type_: ApplicationsOut
+    """
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail="Invalid applications ID format")
+
+    filter_dict = {"_id": ObjectId(id),"agent_id":agent_id}
+    result = await get_applications(filter_dict)
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Applications not found")
+
+    return result
+
+
 async def retrieve_applicationss(agent_id:str=None,start=0,stop=100,job_id:str=None) -> List[ApplicationsOut]:
     """Retrieves ApplicationsOut Objects in a list
 

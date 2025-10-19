@@ -119,4 +119,5 @@ async def retrieve_jobss_for_specific_agents(agent_id,start=0,stop=100) -> List[
     Returns:
         _type_: List[JobsOut]
     """
-    return await get_jobss(start=start,stop=stop)
+    filter_dictionary={"admin_approved":True}
+    return await get_jobss(start=start,stop=stop,filter_dict=filter_dictionary)

@@ -2,6 +2,8 @@
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from security.auth import accessTokenOut,verify_agent_token,verify_client_token,verify_admin_token
 from typing import List
+from datetime import datetime,timedelta
+from core.scheduler import scheduler
 from schemas.response_schema import APIResponse
 from schemas.logs import (
     LogsCreate,
@@ -16,14 +18,16 @@ from services.logs_service import (
     retrieve_logss,
     retrieve_logs_by_logs_id,
     update_logs_by_id,
+    retrieve_logss_that_involve_agent_and_a_particular_job,
+    retrieve_logs_by_logs_id_and_agent_id,
 )
 
 router = APIRouter(prefix="/logss", tags=["Logss"])
 
 @router.get("/agent/list/{job_id}", response_model=APIResponse[List[LogsOut]])
-async def list_logss(job_id:str,token: accessTokenOut = Depends(verify_agent_token)):
-    # TODO: ADD A VERIFICATION TO KNOW IF THIS USER IS ALLOWED TO VIEW THIS LOGS
-    items = await retrieve_logss()
+async def list_logss(job_id:str,token: accessTokenOut = Depends(verify_agent_token),start:int=0,stop:int=100):
+    
+    items = await retrieve_logss_that_involve_agent_and_a_particular_job(job_id=job_id,agent_id=token.userId,start=start,stop=stop)
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
 @router.get("/client/list/{job_id}", response_model=APIResponse[List[LogsOut]])
@@ -35,8 +39,8 @@ async def list_logss(job_id:str,token: accessTokenOut = Depends(verify_client_to
 
 @router.get("/agent/view", response_model=APIResponse[LogsOut])
 async def get_my_logss(id: str = Query(..., description="logs ID to fetch specific item"), token: accessTokenOut = Depends(verify_agent_token) ):
-    # TODO: ADD A VERIFICATION TO KNOW IF THIS USER IS ALLOWED TO VIEW THIS LOGS
-    items = await retrieve_logs_by_logs_id(id=id)
+    
+    items = await retrieve_logs_by_logs_id_and_agent_id(id=id,agent_id=token.userId)
     return APIResponse(status_code=200, data=items, detail="logss items fetched")
 
 @router.get("/client/view",response_model_exclude=None, response_model=APIResponse[LogsOut])
@@ -71,6 +75,8 @@ async def client_endpoint_to_reject_logss(log_id: str,log_rejection:LogReject, t
     if (log.client_approved==False) and (log.rejection_reason==None):
         update_data = LogsUpdate(client_approved=False,rejection_reason=log_rejection.rejection_reason)
         new_logs= await update_logs_by_id(logs_id=log_id,logs_data=update_data)
+        run_time = datetime.now()+timedelta(days=7)
+        scheduler.add_job(remove_logs,"date",run_date=run_time,args=[log_id],misfire_grace_time=31536000)
         return APIResponse(status_code=200,data=new_logs,detail="Successfully  approved logs")
     elif(log.client_approved==False) and (log.rejection_reason!=None): raise HTTPException(status_code=409,detail="Log already rejected")
     else: raise HTTPException(status_code=400,detail="Bad request")

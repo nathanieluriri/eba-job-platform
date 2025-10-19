@@ -35,7 +35,7 @@ class ApplicationAccept(BaseModel):
 
     
 class ApplicationReject(BaseModel):
-    id:str
+    application_id:str
     rejection_reason:str
 class ApplicationsOut(ApplicationsBase):
     # Add other fields here 

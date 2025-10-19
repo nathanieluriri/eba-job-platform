@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from typing import List
 from bson import ObjectId
+from core.scheduler import scheduler
+from datetime import datetime,timedelta
 from schemas.response_schema import APIResponse
 from security.auth import verify_agent_token,accessTokenOut,verify_admin_token,verify_client_token
 from schemas.applications import (
@@ -21,6 +23,7 @@ from services.applications_service import (
     remove_applications,
     retrieve_applicationss,
     retrieve_applications_by_applications_id,
+    retrieve_applications_by_applications_id_and_agent_id,
     update_applications_by_id,
 )
 from services.jobs_service import (
@@ -85,10 +88,14 @@ async def approve_agent_job_application(acceptance_data:ApplicationAccept,job_id
 @router.patch("/client/reject-agent/{job_id}", response_model=APIResponse[ApplicationsOut],dependencies=[Depends(verify_client_token)])
 async def reject_agent_job_application(rejection_data:ApplicationReject,job_id:str,token:accessTokenOut=Depends(verify_client_token)):
     jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
+    
     if jobs:
         print(jobs)  
         update_data = ApplicationsUpdate(proposal_status=ProposalState.rejected,rejection_reason=rejection_data.rejection_reason) 
-        item = await update_applications_by_id(applications_id=rejection_data.id,applications_data=update_data)
+        item = await update_applications_by_id(applications_id=rejection_data.application_id,applications_data=update_data)
+        
+        run_time = datetime.now()+timedelta(days=30)
+        scheduler.add_job(remove_applications,"date",run_date=run_time,args=[rejection_data.application_id],misfire_grace_time=31536000)
         
         return APIResponse(status_code=200, data=item, detail="applications updated successfully")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
@@ -97,9 +104,11 @@ async def reject_agent_job_application(rejection_data:ApplicationReject,job_id:s
 
 
 @router.get("/agent/me", response_model=APIResponse[ApplicationsOut])
-async def get_my_applicationss(id: str = Query(..., description="applications ID to fetch specific item")):
-    items = await retrieve_applications_by_applications_id(id=id)
-    return APIResponse(status_code=200, data=items, detail="applicationss items fetched")
+async def get_my_applicationss(id: str = Query(..., description="applications ID to fetch specific item"),token:accessTokenOut=Depends(verify_agent_token)):
+    items = await retrieve_applications_by_applications_id_and_agent_id(id=id,agent_id=token.userId)
+    if items:
+        return APIResponse(status_code=200, data=items, detail="applicationss items fetched")
+    else: raise HTTPException(status_code=403, detail="Unauthorized request")
 
 
 @router.post("/apply")

@@ -68,6 +68,29 @@ async def retrieve_logs_by_logs_id(id: str) -> LogsOut:
     return result
 
 
+
+async def retrieve_logs_by_logs_id_and_agent_id(id: str,agent_id:str) -> LogsOut:
+    """Retrieves logs object based specific Id 
+
+    Raises:
+        HTTPException 404(not found): if  Logs not found in the db
+        HTTPException 400(bad request): if  Invalid logs ID format
+
+    Returns:
+        _type_: LogsOut
+    """
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail="Invalid logs ID format")
+
+    filter_dict = {"_id": ObjectId(id),"agent_id":agent_id}
+    result = await get_logs(filter_dict)
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Logs not found")
+
+    return result
+
+
 async def retrieve_logss(start=0,stop=100) -> List[LogsOut]:
     """Retrieves LogsOut Objects in a list
 
@@ -75,6 +98,17 @@ async def retrieve_logss(start=0,stop=100) -> List[LogsOut]:
         _type_: LogsOut
     """
     return await get_logss(start=start,stop=stop)
+
+
+async def retrieve_logss_that_involve_agent_and_a_particular_job(job_id:str,agent_id:str,start=0,stop=100,) -> List[LogsOut]:
+    """Retrieves LogsOut Objects in a list
+
+    Returns:
+        _type_: LogsOut
+    """
+    
+    filter_dictionary = {"job_id":job_id,"agent_id":agent_id}
+    return await get_logss(start=start,stop=stop,filter_dict=filter_dictionary)
 
 
 async def update_logs_by_id(logs_id: str, logs_data: LogsUpdate) -> LogsOut:
