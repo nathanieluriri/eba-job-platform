@@ -128,7 +128,7 @@ async def login_client(
     items = await authenticate_client(user_data=user_data)
     if items.admin_approved==True:
         return APIResponse(status_code=200, data=items, detail="Fetched successfully")
-    else: raise HTTPException(status_code=409,detail="Account hasn't been approved by admin yet please wait until your account has been approved")
+    else: raise HTTPException(status_code=403,detail="Account hasn't been approved by admin yet please wait until your account has been approved")
 
 @router.post(
     "/get-reset-token",

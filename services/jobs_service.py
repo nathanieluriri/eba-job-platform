@@ -115,9 +115,10 @@ async def retrieve_jobss_for_specific_client(client_id,start=0,stop=100) -> List
 
 async def retrieve_jobss_for_specific_agents(agent_id,start=0,stop=100) -> List[JobsOut]:
     """Retrieves JobsOut Objects in a list
-    TODO: IMPLEMENT THE CONDITIONS TO RETURN ONLY JOBS A SPECIFIC AGENT QUALIFIES FOR
+    
     Returns:
         _type_: List[JobsOut]
     """
+    # TODO: IMPLEMENT THE CONDITIONS TO RETURN ONLY JOBS A SPECIFIC AGENT QUALIFIES FOR
     filter_dictionary={"admin_approved":True}
     return await get_jobss(start=start,stop=stop,filter_dict=filter_dictionary)

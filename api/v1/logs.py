@@ -25,6 +25,11 @@ from services.logs_service import (
 from services.jobs_service import(
     get_jobs
 )
+from services.applications_service import(
+    get_applications,
+    
+)
+from schemas.applications import ProposalState
 router = APIRouter(prefix="/logss", tags=["Logss"])
 
 @router.get("/agent/list/{job_id}", response_model=APIResponse[List[LogsOut]])
@@ -153,10 +158,18 @@ async def agent_posting_new_logss(log_data: LogsBase = Body(
         },
     }
 ), token: accessTokenOut = Depends(verify_agent_token) ):
-    # TODO: ADD A VERIFICATION TO KNOW IF THIS USER IS ALLOWED TO POST LOGS FOR THIS JOB
-    logs = LogsCreate(**log_data.model_dump(),agent_id=token.userId)
-    item = await add_logs(logs_data=logs)
-    return APIResponse(status_code=200,data=item,detail="Successfully Posted Job progress update (log) ")
-
-
+    
+    Application =await get_applications(filter_dict={"agent_id":token.userId,"job_id":log_data.job_id})
+    if Application:
+        if Application.proposal_status == ProposalState.accepted:
+            logs = LogsCreate(**log_data.model_dump(),agent_id=token.userId)
+            item = await add_logs(logs_data=logs)
+            return APIResponse(status_code=200,data=item,detail="Successfully Posted Job progress update (log) ")
+        elif Application.proposal_status == ProposalState.pending_review:
+            raise HTTPException(status_code=403,detail="User's application is still in the pending review state and can't post logs unless the application will be accepted")
+        elif Application.proposal_status == ProposalState.rejected:
+            
+            raise HTTPException(status_code=403,detail="User's application has been rejected therefore user can't post logs")
+    else: 
+        raise HTTPException(status_code=403,detail="User didn't apply for the job so user cant post logs about it")
  

@@ -130,6 +130,8 @@ app = FastAPI(
 
 #     """,
 #     version="0.1.0",)
+
+
 app.add_middleware(RequestTimingMiddleware)
 # Setup limiter
 storage = RedisStorage(redis_url)
@@ -250,7 +252,7 @@ async def test_celery():
 def read_root():
     run_time = datetime.now() + timedelta(seconds=20)
     scheduler.add_job(test_scheduler,"date",run_date=run_time,args=[f"test message {run_time}"],misfire_grace_time=31536000)
-    # scheduler.add_job(test_scheduler,"date",run_date=run_time,args=[f"test message {run_time}"])
+    
     return {"message": "Hello from FasterAPI!"}
 
 # Health check route
