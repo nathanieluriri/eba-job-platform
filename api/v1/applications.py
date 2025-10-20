@@ -156,5 +156,11 @@ async def agent_applying_for_job(application_data: ApplicationsBase = Body(
 ), token: accessTokenOut = Depends(verify_agent_token),):
     # TODO: ADD VERIFICATION HERE ONLY AN AGENT THAT HAS THE ACCURATE SKILLS CAN APPLY TO A JOB WITH THEIR SKILLS
     application = ApplicationsCreate(**application_data.model_dump(),agent_id=token.userId,proposal_status=ProposalState.pending_review)
-    item = await add_applications(applications_data=application)
-    return APIResponse(status_code=200,data=item,detail="Successfully applied for the Job")
+    filter_dictionary = {"_id":ObjectId(application.job_id)}
+    current_job =await get_jobs(filter_dict=filter_dictionary)
+    
+    if (current_job.admin_approved==True) and (current_job.isCompleted==False):
+        item = await add_applications(applications_data=application)
+        return APIResponse(status_code=200,data=item,detail="Successfully applied for the Job")
+    else: 
+        raise HTTPException(status_code=403,detail="Job is not accepting applications") 

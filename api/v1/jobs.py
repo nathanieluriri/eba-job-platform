@@ -11,8 +11,10 @@ from schemas.jobs import (
     JobsBase,
     PriceBreakDown,
     JobsUpdate,
-    JobStatus
+    JobStatus,
+    
 )
+from bson import ObjectId
 from services.jobs_service import (
     add_jobs,
     remove_jobs,
@@ -20,7 +22,8 @@ from services.jobs_service import (
     retrieve_jobs_by_jobs_id,
     update_jobs_by_id,
     retrieve_jobss_for_specific_client,
-    retrieve_jobss_for_specific_agents
+    retrieve_jobss_for_specific_agents,
+    get_jobs,
 )
 
 router = APIRouter(prefix="/jobss", tags=["Jobss"])
@@ -203,3 +206,18 @@ async def approve_new_job_posting(
         
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
     else: raise HTTPException(status_code=409,detail="admin has approved already")
+    
+    
+@router.patch("/mark-completed/{job_id}", response_model=APIResponse[JobsOut],dependencies=[Depends(verify_client_token)])
+async def reject_agent_job_application(job_id:str,token:accessTokenOut=Depends(verify_client_token)):
+    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
+    
+    if jobs:
+        print(jobs)  
+        update_data = JobsUpdate(isCompleted=True) 
+        item = await update_jobs_by_id(jobs_id=job_id,jobs_data=update_data)
+        
+        return APIResponse(status_code=200, data=item, detail="applications updated successfully")
+    return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
+
+

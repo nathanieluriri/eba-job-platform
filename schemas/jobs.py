@@ -21,12 +21,14 @@ class JobsBase(BaseModel):
     requirement:str
     skills_needed:Skills
     timeline:JobTimeline
+    
     pass
 
 class JobsCreate(JobsBase):
     # Add other fields here
     client_id:str
     admin_approved:bool = Field(default=False)
+    isCompleted:Optional[bool]=Field(default=False)
     break_down:PriceBreakDown= Field(default=PriceBreakDown(Service=0,Charges=0,Tax=0))
     status: JobStatus = Field(default=JobStatus.pending)
     date_created: int = Field(default_factory=lambda: int(time.time()))
@@ -47,6 +49,7 @@ class JobsUpdate(BaseModel):
     rejection_reason:Optional[str]=None
     break_down:Optional[PriceBreakDown]=None 
     status:Optional[JobStatus]=None 
+    isCompleted:Optional[bool]=None
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
 class JobsOut(JobsBase):
@@ -54,6 +57,7 @@ class JobsOut(JobsBase):
     id: Optional[str] =None
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
+    isCompleted:Optional[bool]=Field(default=False)
     admin_approved:bool = Field(default=False)
     break_down:PriceBreakDown= Field(default=PriceBreakDown(Service=0,Charges=0,Tax=0))
     status: JobStatus = Field(default=JobStatus.pending)
