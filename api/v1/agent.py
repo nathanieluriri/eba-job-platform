@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from core.redis_cache import get_cached_value,cache_with_expiry
 from typing import List,Annotated
 from services.utils import generate_random_string,generate_random_string_digits_only
-from security.auth import verify_admin_token,verify_token
+from security.auth import verify_admin_token,verify_token,verify_client_token
 from schemas.response_schema import APIResponse
 from schemas.agent import (
     AgentCreate,
@@ -82,6 +82,14 @@ async def get_my_agents(token:accessTokenOut =Depends(verify_agent_token)):
     
     items = await retrieve_agent_by_agent_id(id=token.userId)
     items.password=""
+    return APIResponse(status_code=200, data=items, detail="agents items fetched")
+
+
+
+@router.get("/client/me", response_model_exclude={"data": {"password"}},response_model_exclude_none=True, response_model=APIResponse[UserOut])
+async def get_my_agents(agent_id:str,token:accessTokenOut =Depends(verify_client_token)):
+    
+    items = await retrieve_agent_by_agent_id(id=agent_id)                                                                         
     return APIResponse(status_code=200, data=items, detail="agents items fetched")
 
 @router.post("/login", response_model_exclude={"data": {"password"}}, response_model=APIResponse[UserOut])

@@ -18,6 +18,9 @@ from schemas.jobs import (
     JobsOut,
     JobsUpdate,
 )
+from services.agent_service import (
+    retrieve_agent_by_agent_id
+)
 from services.applications_service import (
     add_applications,
     remove_applications,
@@ -44,11 +47,16 @@ async def list_all_job_applications_agent_has_ever_applied_for(start:int= Query(
 
 @router.get("/client/list", response_model=APIResponse[List[ApplicationsOut]])
 async def list_applications_clients_have_for_a_particular_job( job_id: str = Query(..., description="Job ID to fetch specific application item"),start:int= Query(..., description="where to start the query from usually 0 used to return a list of the item"),stop:int= Query(..., description="where to end the query at usually ends withs 100 used to return a list of the item"),token: accessTokenOut = Depends(verify_client_token),):
+    applications=[]
     jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
     if jobs:
         print(jobs)    
         items = await retrieve_applicationss(start=start,stop=stop,job_id=job_id)
-        return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+        for application in items:
+            agent_details = await retrieve_agent_by_agent_id(id=application.agent_id)
+            application.agent_details=agent_details
+            applications.append(application) 
+        return APIResponse(status_code=200, data=applications, detail="Fetched successfully")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
 
 
@@ -70,9 +78,10 @@ async def get_application_object_using_client_token( token:accessTokenOut=Depend
     jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
     if jobs:
         print(jobs)    
-        items = await retrieve_applications_by_applications_id(id=id)
-        
-        return APIResponse(status_code=200, data=items, detail="applicationss items fetched")
+        application = await retrieve_applications_by_applications_id(id=id)
+        agent_details = await retrieve_agent_by_agent_id(id=application.agent_id)
+        application.agent_details=agent_details
+        return APIResponse(status_code=200, data=application, detail="applicationss items fetched")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
 
 @router.patch("/client/select-agent/{job_id}", response_model=APIResponse[ApplicationsOut],dependencies=[Depends(verify_client_token)])

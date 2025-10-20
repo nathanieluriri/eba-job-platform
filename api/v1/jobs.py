@@ -209,9 +209,8 @@ async def approve_new_job_posting(
     
     
 @router.patch("/mark-completed/{job_id}", response_model=APIResponse[JobsOut],dependencies=[Depends(verify_client_token)])
-async def reject_agent_job_application(job_id:str,token:accessTokenOut=Depends(verify_client_token)):
+async def client_should_use_this_to_mark_job_as_complete(job_id:str,token:accessTokenOut=Depends(verify_client_token)):
     jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
-    
     if jobs:
         print(jobs)  
         update_data = JobsUpdate(isCompleted=True) 
