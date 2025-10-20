@@ -46,7 +46,7 @@ class ApplicationsOut(ApplicationsBase):
     agent_id:str
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
-    agent_details= Optional[AgentOut]=None
+    agent_details: Optional[AgentOut]=None
     @model_validator(mode='before')
     def set_dynamic_values(cls,values):
         values['id']= str(values.get('_id'))
