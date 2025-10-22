@@ -91,13 +91,13 @@ async def retrieve_logs_by_logs_id_and_agent_id(id: str,agent_id:str) -> LogsOut
     return result
 
 
-async def retrieve_logss(start=0,stop=100) -> List[LogsOut]:
+async def retrieve_logss(job_id,start=0,stop=100) -> List[LogsOut]:
     """Retrieves LogsOut Objects in a list
 
     Returns:
         _type_: LogsOut
     """
-    return await get_logss(start=start,stop=stop)
+    return await get_logss(filter_dict={"job_id":job_id},start=start,stop=stop)
 
 
 async def retrieve_logss_that_involve_agent_and_a_particular_job(job_id:str,agent_id:str,start=0,stop=100,) -> List[LogsOut]:

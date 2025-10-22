@@ -43,7 +43,7 @@ async def list_logss(job_id:str,token: accessTokenOut = Depends(verify_client_to
   
     Job =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
     if Job !=None:
-        items = await retrieve_logss(start=start,stop=stop)
+        items = await retrieve_logss(job_id=job_id,start=start,stop=stop)
         return APIResponse(status_code=200, data=items, detail="Fetched successfully")
     else: 
         raise HTTPException(status_code=403, detail="User didn't create job so you can't view it")
