@@ -11,6 +11,7 @@ services:
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
       - MONGO_URL=${MONGO_URL}
       - DB_NAME=${DB_NAME}
+    restart: always
     volumes:
       - .:/app
     depends_on:
