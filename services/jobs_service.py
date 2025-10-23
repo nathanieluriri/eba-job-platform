@@ -18,7 +18,7 @@ from repositories.jobs import (
     delete_jobs,
 )
 from schemas.jobs import JobsCreate, JobsUpdate, JobsOut
-
+from services.agent_service import retrieve_agent_by_agent_id
 
 async def add_jobs(jobs_data: JobsCreate) -> JobsOut:
     """adds an entry of JobsCreate to the database and returns an object
@@ -119,6 +119,8 @@ async def retrieve_jobss_for_specific_agents(agent_id,start=0,stop=100) -> List[
     Returns:
         _type_: List[JobsOut]
     """
-    # TODO: IMPLEMENT THE CONDITIONS TO RETURN ONLY JOBS A SPECIFIC AGENT QUALIFIES FOR
-    filter_dictionary={"admin_approved":True}
+    
+    agent =await retrieve_agent_by_agent_id(agent_id)
+    
+    filter_dictionary={"admin_approved":True,"skills_needed":agent.primary_area_of_expertise}
     return await get_jobss(start=start,stop=stop,filter_dict=filter_dictionary)
