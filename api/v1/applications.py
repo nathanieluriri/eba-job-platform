@@ -16,7 +16,9 @@ from schemas.applications import (
 )
 from schemas.jobs import (
     JobsOut,
+    JobStatus,
     JobsUpdate,
+    
 )
 from services.agent_service import (
     retrieve_agent_by_agent_id
@@ -91,6 +93,8 @@ async def approve_agent_job_application(acceptance_data:ApplicationAccept,job_id
         print(jobs)  
         update_data = ApplicationsUpdate(proposal_status=ProposalState.accepted) 
         item = await update_applications_by_id(applications_id=acceptance_data.id,applications_data=update_data)
+        job_data = JobsUpdate(status=JobStatus.active)
+        await update_jobs_by_id(jobs_id=jobs.id,jobs_data=job_data)
         return APIResponse(status_code=200, data=item, detail="applications updated successfully")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
 

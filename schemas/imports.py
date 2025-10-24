@@ -32,6 +32,8 @@ class UserTypes(str,Enum):
 class JobStatus(str,Enum):
     active="active"
     pending="pending"
+    rejected="rejected"
+    completed="completed"
     
 class JobCatgeries(str,Enum):
     web_development="Web Devlopment"
