@@ -116,7 +116,10 @@ async def retrieve_users(start=0,stop=100) -> List[UserOut]:
     Returns:
         _type_: UserOut
     """
-    return await get_users(start=start,stop=stop)
+    filter_dict = {
+    "rejection_reason": {"$exists": False}
+}
+    return await get_users(filter_dict=filter_dict,start=start,stop=stop)
 
 
 async def update_user_by_id(user_id: str, user_data: UserUpdate) -> UserOut:
