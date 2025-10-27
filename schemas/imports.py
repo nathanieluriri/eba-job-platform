@@ -81,6 +81,14 @@ class PriorityStatus(str,Enum):
     low="low"
     
 class AlertType(str,Enum):
+    new_message = "new_message"
+    task_assigned = "task_assigned"
+    payment_received = "payment_received"
+    payment_failed = "payment_failed"
+    system_update = "system_update"
+    account_warning = "account_warning"
+    project_deadline = "project_deadline"
+    generic_notification = "generic_notification"
     new_agent="new_agent"
     agent_completion_update="agent_completion_update"
     

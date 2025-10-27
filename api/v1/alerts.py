@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, HTTPException, Query, status, Path,Depends
+from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from typing import List,Annotated
 from security.auth import verify_token,verify_admin_token
 from schemas.response_schema import APIResponse
@@ -8,6 +8,7 @@ from schemas.alerts import (
     AlertsOut,
     AlertsBase,
     AlertsUpdate,
+    alert_examples,
     AlertActions,
     
 )
@@ -114,3 +115,36 @@ async def get_my_alertss(id: str = Query(..., description="alerts ID to fetch sp
 async def get_my_alertss(id: str = Query(..., description="alerts ID to fetch specific alert action for admin")):
     items = await retrieve_alerts_by_alerts_id(id=id)
     return APIResponse(status_code=200, data=items, detail="alertss items fetched")
+
+
+
+
+@router.post(
+    "/test-alert-creation",
+    
+    response_model_exclude_none=True,
+    tags=["Alerts"]
+)
+async def create_test_alert(
+    alert_data: Annotated[
+        AlertsBase,
+        Body(
+            openapi_examples=alert_examples
+        ),
+    ]
+):
+    """
+    Test endpoint for creating a new alert.
+    
+    This endpoint accepts an alert payload and returns it,
+    showcasing different examples in the API documentation.
+    """
+    # In a real app, you would save this alert_data to the database.
+    # For this test, we just return the data we received.
+    alert =AlertsCreate(**alert_data.model_dump())
+    new_alert = await add_alerts(alerts_data=alert)
+    return APIResponse(
+        status_code=200,
+        data=new_alert,
+        detail=f"Test alert created successfully for user {alert_data.user_id}"
+    )
