@@ -86,7 +86,7 @@ async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
     summary="Get all alerts (Admin)",
     description="Fetches all admin alerts in the system. Only accessible by admins."
 )
-async def list_admin_alertss(token:accessTokenOut =Depends(verify_admin_token)):
+async def list_admin_alertss(token=Depends(verify_admin_token)):
     """
     Retrieve all alerts (admin only).
 
@@ -97,7 +97,8 @@ async def list_admin_alertss(token:accessTokenOut =Depends(verify_admin_token)):
         APIResponse[List[AlertsOut]]: A structured API response containing
         a list of all alerts in the system (admin scope).
     """
-    items = await retrieve_alertss(user_type=UserTypes.admin,user_id=token.userId)
+
+    items = await retrieve_alertss(user_type=UserTypes.admin,user_id=token.get("userId"))
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
 
