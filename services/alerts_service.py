@@ -17,7 +17,7 @@ from repositories.alerts import (
     update_alerts,
     delete_alerts,
 )
-from schemas.alerts import AlertsCreate, AlertsUpdate, AlertsOut
+from schemas.alerts import UserTypes, AlertsCreate, AlertsUpdate, AlertsOut
 
 
 async def add_alerts(alerts_data: AlertsCreate) -> AlertsOut:
@@ -68,13 +68,14 @@ async def retrieve_alerts_by_alerts_id(id: str) -> AlertsOut:
     return result
 
 
-async def retrieve_alertss(start=0,stop=100) -> List[AlertsOut]:
+async def retrieve_alertss(user_type:UserTypes,user_id:str,start=0,stop=100) -> List[AlertsOut]:
     """Retrieves AlertsOut Objects in a list
 
     Returns:
         _type_: AlertsOut
     """
-    return await get_alertss(start=start,stop=stop)
+    filter_dict={"user_type":user_type,"user_id":user_id}
+    return await get_alertss(filter_dict=filter_dict,start=start,stop=stop)
 
 
 async def update_alerts_by_id(alerts_id: str, alerts_data: AlertsUpdate) -> AlertsOut:

@@ -10,6 +10,7 @@ from schemas.alerts import (
     AlertsUpdate,
     alert_examples,
     AlertActions,
+    UserTypes
     
 )
 from schemas.tokens_schema import (
@@ -47,7 +48,7 @@ async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
         APIResponse[List[AlertsOut]]: A structured API response containing
         a list of user-specific alerts.
     """
-    items = await retrieve_alertss()
+    items = await retrieve_alertss(user_type=UserTypes.agent,user_id=token.userId)
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
 
@@ -59,7 +60,7 @@ async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
 )
 async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
     """
-    Retrieve all alerts for an authenticated agent.
+    Retrieve all client for an authenticated agent.
 
     This endpoint fetches a list of alerts that belong to the currently
     authenticated user. The user is authenticated via their access token.
@@ -72,7 +73,7 @@ async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
         APIResponse[List[AlertsOut]]: A structured API response containing
         a list of user-specific alerts.
     """
-    items = await retrieve_alertss()
+    items = await retrieve_alertss(user_type=UserTypes.client,user_id=token.userId)
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
 
@@ -85,7 +86,7 @@ async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
     summary="Get all alerts (Admin)",
     description="Fetches all admin alerts in the system. Only accessible by admins."
 )
-async def list_admin_alertss():
+async def list_admin_alertss(token:accessTokenOut =Depends(verify_admin_token)):
     """
     Retrieve all alerts (admin only).
 
@@ -96,7 +97,7 @@ async def list_admin_alertss():
         APIResponse[List[AlertsOut]]: A structured API response containing
         a list of all alerts in the system (admin scope).
     """
-    items = await retrieve_alertss()
+    items = await retrieve_alertss(user_type=UserTypes.admin,user_id=token.userId)
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
 
