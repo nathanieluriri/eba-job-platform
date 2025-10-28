@@ -31,7 +31,7 @@ router = APIRouter(prefix="/alertss", tags=["Alertss"])
 
 @router.get(
     "/agent",
-    response_model=APIResponse[List[AlertsOut]],
+    response_model=APIResponse[ListOfAlertsOut],
     summary="Get agent alerts",
     description="Fetches all alerts that belong to an authenticated agent."
 )
@@ -59,7 +59,7 @@ async def list_agents_alertss(token: accessTokenOut = Depends(verify_token)):
 
 @router.get(
     "/client",
-    response_model=APIResponse[List[AlertsOut]],
+    response_model=APIResponse[ListOfAlertsOut],
     summary="Get client alerts",
     description="Fetches all alerts that belong to an authenticated client."
 )
@@ -131,7 +131,7 @@ async def read_admin_alerts(token: accessTokenOut = Depends(verify_admin_token))
     return APIResponse(status_code=200, data=List_of_items, detail="Fetched successfully")
 
 
-@router.get("/client/read", response_model=APIResponse[AlertsOut])
+@router.get("/client/read", response_model=APIResponse[ListOfAlertsOut])
 async def read_clients_alertss(token: accessTokenOut = Depends(verify_token)):
     """
     Returns List of Unread client alerts while spinning up a task to mark read for all unread alerts 
@@ -148,9 +148,9 @@ async def read_clients_alertss(token: accessTokenOut = Depends(verify_token)):
     result = celery_app.send_task("celery_worker.update_unread_alerts", args=[[item.model_dump() for item in unread_items]])
     return APIResponse(status_code=200, data=List_of_items, detail="Fetched successfully")
 
-@router.get("/agent/read", response_model=APIResponse[AlertsOut])
+@router.get("/agent/read", response_model=APIResponse[ListOfAlertsOut])
 async def read_agents_alertss(token: accessTokenOut = Depends(verify_token)):
-    items = await retrieve_alertss(user_type=UserTypes.client,user_id=token.userId)
+    items = await retrieve_alertss(user_type=UserTypes.agent,user_id=token.userId)
     unread_items = [item for item in items if item.unread]
     List_of_items =ListOfAlertsOut(alerts=unread_items,total_number_of_unread=len(unread_items))
     result = celery_app.send_task("celery_worker.update_unread_alerts", args=[[item.model_dump() for item in unread_items]])

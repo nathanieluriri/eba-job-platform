@@ -41,9 +41,10 @@ class AlertsOut(AlertsBase):
     unread:Optional[bool] = Field(default=True)
     @model_validator(mode='before')
     def set_dynamic_values(cls,values):
-        if values.get('id',None)==None: 
-            values['id']= str(values.get('_id'))
-        return values
+        if isinstance(values,dict):
+            if values.get('id',None)==None: 
+                values['id']= str(values.get('_id'))
+            return values
     class Config:
         from_attributes = True
         populate_by_name = True
