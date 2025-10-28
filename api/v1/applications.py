@@ -177,7 +177,7 @@ async def agent_applying_for_job(application_data: ApplicationsBase = Body(
     current_job =await get_jobs(filter_dict=filter_dictionary)
     
     
-    if (agent.primary_area_of_expertise ==current_job.skills_needed):
+    if (agent.primary_area_of_expertise ==current_job.category):
     
         if (current_job.admin_approved==True) and (current_job.isCompleted==False):
             item = await add_applications(applications_data=application)
@@ -185,4 +185,4 @@ async def agent_applying_for_job(application_data: ApplicationsBase = Body(
         else: 
             raise HTTPException(status_code=403,detail="Job is not accepting applications") 
     else:
-        raise HTTPException(status_code=401,detail="Job is not available for this agent due to skill requirements")
+        raise HTTPException(status_code=401,detail="Job is not available for this agent due to s requirements")
