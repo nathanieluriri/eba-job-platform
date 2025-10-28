@@ -247,6 +247,7 @@ async def test_scheduler(message):
 async def test_celery():
     result = celery_app.send_task("celery_worker.test_scheduler", args=["Messageeee"])
     return {"task_id": result.id}
+    
    
 @app.get("/")
 def read_root():

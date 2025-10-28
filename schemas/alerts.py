@@ -27,20 +27,22 @@ class AlertsCreate(AlertsBase):
     # Add other fields here
     date_created: int = Field(default_factory=lambda: int(time.time()))
     last_updated: int = Field(default_factory=lambda: int(time.time()))
-
+    unread:bool = Field(default=True)
 class AlertsUpdate(BaseModel):
     # Add other fields here 
     last_updated: int = Field(default_factory=lambda: int(time.time()))
+    unread:bool = Field(default=False)
 
 class AlertsOut(AlertsBase):
     # Add other fields here 
     id: Optional[str] =None
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
-    
+    unread:Optional[bool] = Field(default=True)
     @model_validator(mode='before')
     def set_dynamic_values(cls,values):
-        values['id']= str(values.get('_id'))
+        if values.get('id',None)==None: 
+            values['id']= str(values.get('_id'))
         return values
     class Config:
         from_attributes = True
@@ -52,6 +54,9 @@ class AlertsOut(AlertsBase):
         
         
         
+class ListOfAlertsOut(BaseModel):
+    alerts:Optional[List[AlertsOut]]=[]
+    total_number_of_unread:Optional[int]=0
 
 alert_examples = {
     "admin_very_high_system_update": {

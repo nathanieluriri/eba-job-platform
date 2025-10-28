@@ -2,6 +2,7 @@
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from typing import List,Annotated
 from security.auth import verify_token,verify_admin_token
+from celery_worker import celery_app
 from schemas.response_schema import APIResponse
 from schemas.alerts import (
     AlertsCreate,
@@ -10,7 +11,8 @@ from schemas.alerts import (
     AlertsUpdate,
     alert_examples,
     AlertActions,
-    UserTypes
+    UserTypes,
+    ListOfAlertsOut
     
 )
 from schemas.tokens_schema import (
@@ -33,7 +35,7 @@ router = APIRouter(prefix="/alertss", tags=["Alertss"])
     summary="Get agent alerts",
     description="Fetches all alerts that belong to an authenticated agent."
 )
-async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
+async def list_agents_alertss(token: accessTokenOut = Depends(verify_token)):
     """
     Retrieve all alerts for an agent.
 
@@ -49,7 +51,10 @@ async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
         a list of user-specific alerts.
     """
     items = await retrieve_alertss(user_type=UserTypes.agent,user_id=token.userId)
-    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+    
+    unread_items = [item for item in items if item.unread]
+    List_of_items =ListOfAlertsOut(alerts=items,total_number_of_unread=len(unread_items))
+    return APIResponse(status_code=200, data=List_of_items, detail="Fetched successfully")
 
 
 @router.get(
@@ -58,7 +63,7 @@ async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
     summary="Get client alerts",
     description="Fetches all alerts that belong to an authenticated client."
 )
-async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
+async def list_clients_alertss(token: accessTokenOut = Depends(verify_token)):
     """
     Retrieve all client for an authenticated agent.
 
@@ -74,7 +79,10 @@ async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
         a list of user-specific alerts.
     """
     items = await retrieve_alertss(user_type=UserTypes.client,user_id=token.userId)
-    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+    
+    unread_items = [item for item in items if item.unread]
+    List_of_items =ListOfAlertsOut(alerts=items,total_number_of_unread=len(unread_items))
+    return APIResponse(status_code=200, data=List_of_items, detail="Fetched successfully")
 
 
 
@@ -82,7 +90,7 @@ async def list_user_alertss(token: accessTokenOut = Depends(verify_token)):
 @router.get(
     "/admin",
     dependencies=[Depends(verify_admin_token)],
-    response_model=APIResponse[List[AlertsOut]],
+    response_model=APIResponse[ListOfAlertsOut],
     summary="Get all alerts (Admin)",
     description="Fetches all admin alerts in the system. Only accessible by admins."
 )
@@ -99,25 +107,54 @@ async def list_admin_alertss(token=Depends(verify_admin_token)):
     """
 
     items = await retrieve_alertss(user_type=UserTypes.admin,user_id=token.get("userId"))
-    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
+    
+    unread_items = [item for item in items if item.unread]
+    List_of_items =ListOfAlertsOut(alerts=items,total_number_of_unread=len(unread_items))
+    return APIResponse(status_code=200, data=List_of_items, detail="Fetched successfully")
 
 
-@router.get("/admin/me", response_model=APIResponse[AlertsOut])
-async def get_my_alertss(id: str = Query(..., description="alerts ID to fetch specific alert action for admin"),token: accessTokenOut = Depends(verify_token)):
-    items = await retrieve_alerts_by_alerts_id(id=id)
-    return APIResponse(status_code=200, data=items, detail="alertss items fetched")
+@router.get("/admin/read", response_model=APIResponse[ListOfAlertsOut])
+async def read_admin_alerts(token: accessTokenOut = Depends(verify_admin_token)):
+    """
+    Returns List of Unread admin alerts while spinning up a task to mark read for all unread alerts 
+
+    Args:
+        token (accessTokenOut, optional): _description_. Defaults to Depends(verify_admin_token).
+
+    Returns:
+        _type_: ListOfAlertsOut
+    """
+    items = await retrieve_alertss(user_type=UserTypes.admin,user_id=token.get("userId"))
+    unread_items = [item for item in items if item.unread]
+    List_of_items =ListOfAlertsOut(alerts=unread_items,total_number_of_unread=len(unread_items))
+    result = celery_app.send_task("celery_worker.update_unread_alerts", args=[[item.model_dump() for item in unread_items]])
+    return APIResponse(status_code=200, data=unread_items, detail="Fetched successfully")
 
 
-@router.get("/client/me", response_model=APIResponse[AlertsOut])
-async def get_my_alertss(id: str = Query(..., description="alerts ID to fetch specific alert action for admin")):
-    items = await retrieve_alerts_by_alerts_id(id=id)
-    return APIResponse(status_code=200, data=items, detail="alertss items fetched")
+@router.get("/client/read", response_model=APIResponse[AlertsOut])
+async def read_clients_alertss(token: accessTokenOut = Depends(verify_token)):
+    """
+    Returns List of Unread client alerts while spinning up a task to mark read for all unread alerts 
 
-@router.get("/agent/me", response_model=APIResponse[AlertsOut])
-async def get_my_alertss(id: str = Query(..., description="alerts ID to fetch specific alert action for admin")):
-    items = await retrieve_alerts_by_alerts_id(id=id)
-    return APIResponse(status_code=200, data=items, detail="alertss items fetched")
+    Args:
+        token (accessTokenOut, optional): _description_. Defaults to Depends(verify_admin_token).
 
+    Returns:
+        _type_: ListOfAlertsOut
+    """
+    items = await retrieve_alertss(user_type=UserTypes.client,user_id=token.userId)
+    unread_items = [item for item in items if item.unread]
+    List_of_items =ListOfAlertsOut(alerts=unread_items,total_number_of_unread=len(unread_items))
+    result = celery_app.send_task("celery_worker.update_unread_alerts", args=[[item.model_dump() for item in unread_items]])
+    return APIResponse(status_code=200, data=unread_items, detail="Fetched successfully")
+
+@router.get("/agent/read", response_model=APIResponse[AlertsOut])
+async def read_agents_alertss(token: accessTokenOut = Depends(verify_token)):
+    items = await retrieve_alertss(user_type=UserTypes.client,user_id=token.userId)
+    unread_items = [item for item in items if item.unread]
+    List_of_items =ListOfAlertsOut(alerts=unread_items,total_number_of_unread=len(unread_items))
+    result = celery_app.send_task("celery_worker.update_unread_alerts", args=[[item.model_dump() for item in unread_items]])
+    return APIResponse(status_code=200, data=unread_items, detail="Fetched successfully")
 
 
 
