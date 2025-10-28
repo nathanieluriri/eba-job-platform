@@ -513,4 +513,4 @@ async def delete_user_account(
     scheduler.add_job(remove_user, "date", run_date=remove_time, args=[token.userId],misfire_grace_time=31536000)
     # The 'result' is assumed to be a standard FastAPI response object or a dict/model 
     # that is automatically converted to a response.
-    return APIResponse(status_code=200,detail="account will be deleted")
+    return APIResponse(status_code=200,data="Job Started",detail="account will be deleted")
