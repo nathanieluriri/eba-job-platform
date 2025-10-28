@@ -128,7 +128,7 @@ async def read_admin_alerts(token: accessTokenOut = Depends(verify_admin_token))
     unread_items = [item for item in items if item.unread]
     List_of_items =ListOfAlertsOut(alerts=unread_items,total_number_of_unread=len(unread_items))
     result = celery_app.send_task("celery_worker.update_unread_alerts", args=[[item.model_dump() for item in unread_items]])
-    return APIResponse(status_code=200, data=unread_items, detail="Fetched successfully")
+    return APIResponse(status_code=200, data=List_of_items, detail="Fetched successfully")
 
 
 @router.get("/client/read", response_model=APIResponse[AlertsOut])
@@ -146,7 +146,7 @@ async def read_clients_alertss(token: accessTokenOut = Depends(verify_token)):
     unread_items = [item for item in items if item.unread]
     List_of_items =ListOfAlertsOut(alerts=unread_items,total_number_of_unread=len(unread_items))
     result = celery_app.send_task("celery_worker.update_unread_alerts", args=[[item.model_dump() for item in unread_items]])
-    return APIResponse(status_code=200, data=unread_items, detail="Fetched successfully")
+    return APIResponse(status_code=200, data=List_of_items, detail="Fetched successfully")
 
 @router.get("/agent/read", response_model=APIResponse[AlertsOut])
 async def read_agents_alertss(token: accessTokenOut = Depends(verify_token)):
@@ -154,7 +154,7 @@ async def read_agents_alertss(token: accessTokenOut = Depends(verify_token)):
     unread_items = [item for item in items if item.unread]
     List_of_items =ListOfAlertsOut(alerts=unread_items,total_number_of_unread=len(unread_items))
     result = celery_app.send_task("celery_worker.update_unread_alerts", args=[[item.model_dump() for item in unread_items]])
-    return APIResponse(status_code=200, data=unread_items, detail="Fetched successfully")
+    return APIResponse(status_code=200, data=List_of_items, detail="Fetched successfully")
 
 
 
