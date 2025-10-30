@@ -102,10 +102,11 @@ class ClientReasonForSignUp(str,Enum):
     need_assitance_with_hiring ="Need assistance with hiring, training, onboarding and management for first month"
     
 class ClientNeedAgentWorkHoursToBe(str,Enum):
-    full_time = "40"
-    part_time="20"
-    
+    full_time = "160"
+    part_time="80"
     both ="both"
+    twenty="20"
+    forty="40"
    
 class AvailableHoursAgentCanCommit(int,Enum):
     full_time=160
