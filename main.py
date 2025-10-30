@@ -15,7 +15,7 @@ import os
 from celery_worker import celery_app
 from contextlib import asynccontextmanager
 from core.scheduler import scheduler
-
+import logging
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
@@ -45,9 +45,8 @@ class RequestTimingMiddleware(BaseHTTPMiddleware):
         # Optionally, print it for logging purposes
         if "health" in str(request.url):
             return response
-        
-        print(f"Request to {request.url} took {process_time:.6f} seconds")
-        
+    
+        logging.info(f"Request to {request.url} took {process_time:.6f} seconds")
         return response
     
     
