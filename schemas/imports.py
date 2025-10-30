@@ -111,6 +111,8 @@ class ClientNeedAgentWorkHoursToBe(str,Enum):
 class AvailableHoursAgentCanCommit(int,Enum):
     full_time=160
     part_time=80 
+    twenty=20
+    forty=40
     
     
 class UTCOffsets(str, Enum):
