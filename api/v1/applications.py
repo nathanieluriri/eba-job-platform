@@ -176,7 +176,9 @@ async def agent_applying_for_job(application_data: ApplicationsBase = Body(
     
     current_job =await get_jobs(filter_dict=filter_dictionary)
     
-    
+    item = await add_applications(applications_data=application)
+    return APIResponse(status_code=200,data=item,detail="Successfully applied for the Job")
+    # TODO: UNDO REMOVAL OF VERIFICATION
     if (agent.primary_area_of_expertise ==current_job.category):
     
         if (current_job.admin_approved==True) and (current_job.isCompleted==False):
