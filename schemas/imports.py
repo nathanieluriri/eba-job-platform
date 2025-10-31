@@ -36,13 +36,13 @@ class JobStatus(str,Enum):
     completed="completed"
     
 class JobCatgeries(str,Enum):
-    web_development="Web Devlopment"
+    web_development="Web Development"
     mobile_development="Mobile Development"
     sales="Sales"
     customer_service="Customer Service"
     editing="Editing"
     book_keeping="Book Keeping"
-    executive_assitant="Executive Assitant"
+    executive_assitant="Executive Assistant"
     appointment_setting="Appointment Setting"
     digital_marketing="Digital Marketing"
     data_analysis="Data Analysis"
