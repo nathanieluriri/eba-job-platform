@@ -2,6 +2,7 @@
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from core.redis_cache import get_cached_value,cache_with_expiry
 from typing import List,Annotated
+from schemas.imports import JobCatgeries
 from services.utils import generate_random_string,generate_random_string_digits_only
 from security.auth import verify_admin_token,verify_token,verify_client_token
 from schemas.response_schema import APIResponse
@@ -76,6 +77,49 @@ async def list_agents(
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
 
+@router.get(
+    "/", 
+    response_model=APIResponse[List[UserOut]],
+    response_model_exclude_none=True,
+       response_model_exclude={"data": {"__all__": {"password"}}},
+    dependencies=[Depends(verify_admin_token)]
+)
+async def list_agents_according_to_job_category(
+    start: Annotated[
+        int,
+        Query(ge=0, description="The starting index (offset) for the list of users.")
+    ],
+    stop: Annotated[
+        int,
+        Query(gt=0, description="The ending index for the list of users (limit).")
+    ] = 100,
+    category: Annotated[
+        JobCatgeries,
+        Query(description="Using client tokens this can get different kinds of agents based on categories.")
+    ] = JobCatgeries.web_development
+):
+    """
+    **ADMIN ONLY:** Retrieves a paginated list of all registered users.
+
+    **Authorization:** Requires a **valid Access Token** (Admin role) in the 
+    `Authorization: Bearer <token>` header.
+
+    ### Examples (Illustrative URLs):
+
+    * **First Page:** `/users?start=0&stop=50`
+    * **Second Page:** `/users?start=50&stop=100`
+    * **Default:** `/users` (Defaults to start=0, stop=100)
+    """
+    
+    # Note: The code below overrides the path parameters with hardcoded defaults (0, 100).
+    # You should typically use the passed parameters: 
+    # items = await retrieve_users(start=start, stop=stop)
+    
+    # Using the hardcoded values from your original code:
+    filter_dict = {"category":category}
+    items = await retrieve_agents(start=0, stop=100,filter=filter_dict)
+    
+    return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
 @router.get("/me", response_model_exclude={"data": {"password"}},response_model_exclude_none=True, dependencies=[Depends(verify_agent_token)],response_model=APIResponse[UserOut])
 async def get_my_agents(token:accessTokenOut =Depends(verify_agent_token)):

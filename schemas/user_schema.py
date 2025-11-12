@@ -25,7 +25,7 @@ class UserBase(BaseModel):
     company_email: Optional[str] = None
     company_address: Optional[str] = None
     
- 
+    primary_area_of_expertise:Optional[JobCatgeries]=None
     client_reason_for_signing_up: Optional[ClientReasonForSignUp] = None
     client_need_agent_work_hours_to_be: Optional[ClientNeedAgentWorkHoursToBe] = None
 

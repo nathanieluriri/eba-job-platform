@@ -46,7 +46,7 @@ class JobCatgeries(str,Enum):
     appointment_setting="Appointment Setting"
     digital_marketing="Digital Marketing"
     data_analysis="Data Analysis"
-    other="Other"
+   
     
     
 class JobTimeline(BaseModel):
