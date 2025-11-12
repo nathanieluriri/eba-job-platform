@@ -48,7 +48,7 @@ async def list_agents(
     start: Annotated[
         int,
         Query(ge=0, description="The starting index (offset) for the list of users.")
-    ] , 
+    ]=0 , 
     stop: Annotated[
         int, 
         Query(gt=0, description="The ending index for the list of users (limit).")
@@ -78,7 +78,7 @@ async def list_agents(
 
 
 @router.get(
-    "/", 
+    "/list", 
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
        response_model_exclude={"data": {"__all__": {"password"}}},
@@ -88,7 +88,7 @@ async def list_agents_according_to_job_category(
     start: Annotated[
         int,
         Query(ge=0, description="The starting index (offset) for the list of users.")
-    ],
+    ]=0,
     stop: Annotated[
         int,
         Query(gt=0, description="The ending index for the list of users (limit).")
