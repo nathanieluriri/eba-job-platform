@@ -82,7 +82,7 @@ async def list_agents(
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
        response_model_exclude={"data": {"__all__": {"password"}}},
-    dependencies=[Depends(verify_admin_token)]
+    dependencies=[Depends(verify_client_token)]
 )
 async def list_agents_according_to_job_category(
     start: Annotated[
