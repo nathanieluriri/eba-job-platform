@@ -227,7 +227,7 @@ async def signup_new_user(
                         "company_email": "contact@techsolutions.com",
                         "company_address": "123 Business Street, City",
                         "full_name": "Alice Johnson",
-                        "services": ["Mobile Development", "Content Writing"],
+                    
                         "client_reason_for_signing_up": "Just hire me someone",
                         "client_need_agent_work_hours_to_be": "both",
                     },
