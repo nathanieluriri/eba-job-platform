@@ -31,8 +31,8 @@ from services.jobs_service import (
 router = APIRouter(prefix="/jobss", tags=["Jobss"])
 # TODO: NEW FLOW FOR THE JOB POSTING IS WHEN CLIENTS POST JOBS ADMIN MAKE EDITS PLUS RECOMMEND AGENTS FOR CLIENTS TO JUDGE
 
-@router.get("/agent/available/",  description="⚠️ **REQUIRES AGENT TOKENS**", response_model=APIResponse[List[JobsOut]])
-async def list_jobss_agent_qualifies_for(start:int= Query(...,  description="where to start the query from usually 0 used to return a list of the item"),stop:int= Query(...,  description="where to end the query at usually ends withs 100 used to return a list of the item"),token:accessTokenOut = Depends(verify_agent_token)):
+@router.get("/agent/",  description="⚠️ **REQUIRES AGENT TOKENS**", response_model=APIResponse[List[JobsOut]])
+async def list_jobs_agent_has_been_selected_for(start:int= Query(...,  description="where to start the query from usually 0 used to return a list of the item"),stop:int= Query(...,  description="where to end the query at usually ends withs 100 used to return a list of the item"),token:accessTokenOut = Depends(verify_agent_token)):
     items = await retrieve_jobss_for_specific_agents(agent_id=token.userId,start=start,stop=stop)
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")
 
@@ -213,7 +213,7 @@ async def admin_sending_client_job_proposal(
     
     
 
-@router.post("client/accept-proposal/{job_id}")
+@router.post("/client/accept-proposal/{job_id}")
 async def client_accepting_admin_job_proposal(
     job_id: str,
     job_data: JobsUpdate = Body(
@@ -244,7 +244,7 @@ async def client_accepting_admin_job_proposal(
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
     
 
-@router.post("client/reject-proposal/{job_id}")
+@router.post("/client/reject-proposal/{job_id}")
 async def client_rejecting_admin_job_proposal(
     job_id: str,
     job_data: JobsUpdate = Body(
@@ -279,7 +279,7 @@ async def client_rejecting_admin_job_proposal(
 async def client_should_use_this_to_mark_job_as_complete(job_id:str,token:accessTokenOut=Depends(verify_client_token)):
     jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
     if jobs:
-        print(jobs)  
+          
         update_data = JobsUpdate(isCompleted=True,status=JobStatus.completed) 
         item = await update_jobs_by_id(jobs_id=job_id,jobs_data=update_data,status=JobStatus.completed)
         
