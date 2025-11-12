@@ -123,7 +123,7 @@ async def retrieve_jobss_for_specific_agents(agent_id,start=0,stop=100) -> List[
     agent =await retrieve_agent_by_agent_id(agent_id)
     
     # TODO: UNCOMMENT THE LINE BELOW TO ENABLE FILTERING BASED ON APPROVAL
-    # filter_dictionary={"admin_approved":True,"category":agent.primary_area_of_expertise}
+    # filter_dictionary={"admin_approved":True,"primary_area_of_expertise":agent.primary_area_of_expertise}
     filter_dictionary={"admin_approved":True,"client_approved":True,"selected_agents.id": agent_id}
     
     return await get_jobss(start=start,stop=stop,filter_dict=filter_dictionary)

@@ -244,7 +244,7 @@ async def signup_new_user(
                         "certificate_url": ["https://example.com/cert2.pdf"],
                         "video_url": "https://example.com/agent_intro.mp4",
                         "personality_url": "https://example.com/agent_personality.pdf",
-                        "category": "Mobile Development",
+                        "primary_area_of_expertise": "Mobile Development",
                         "years_of_experience": 5,
                         "three_most_commonly_used_tools_or_platforms": [
                             "Google Analytics",

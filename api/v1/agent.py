@@ -93,7 +93,7 @@ async def list_agents_according_to_job_category(
         int,
         Query(gt=0, description="The ending index for the list of users (limit).")
     ] = 100,
-    category: Annotated[
+    primary_area_of_expertise: Annotated[
         JobCatgeries,
         Query(description="Using client tokens this can get different kinds of agents based on categories.")
     ] = JobCatgeries.web_development
@@ -116,7 +116,7 @@ async def list_agents_according_to_job_category(
     # items = await retrieve_users(start=start, stop=stop)
     
     # Using the hardcoded values from your original code:
-    filter_dict = {"category":category}
+    filter_dict = {"primary_area_of_expertise":primary_area_of_expertise}
     items = await retrieve_agents(start=0, stop=100,filter=filter_dict)
     
     return APIResponse(status_code=200, data=items, detail="Fetched successfully")

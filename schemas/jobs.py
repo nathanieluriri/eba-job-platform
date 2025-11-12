@@ -16,7 +16,7 @@ import time
 class JobsBase(BaseModel):
     # Add other fields here
     project_title:str
-    category: JobCatgeries
+    primary_area_of_expertise: JobCatgeries
     budget:int
     description:str 
     timeline:JobTimeline
@@ -44,7 +44,7 @@ class JobsUpdate(BaseModel):
     proposal:Optional[str]=None
     recommended_agents:Optional[List[AgentOut]]=None
     selected_agents:Optional[List[AgentOut]]=None
-    category: Optional[JobCatgeries]=None
+    primary_area_of_expertise: Optional[JobCatgeries]=None
     admin_approved:Optional[bool] =None
     client_approved:Optional[bool] =None
     client_rejection_reason:Optional[str]=None

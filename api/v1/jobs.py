@@ -124,7 +124,7 @@ async def post_new_jobs(
                 ),
                 "value": {
                     "project_title": "E-commerce Website Development",
-                    "category": "Web Devlopment",  # ✅ match Enum exactly
+                    "primary_area_of_expertise": "Web Devlopment",  # ✅ match Enum exactly
                     "budget": 2500,
                     "description": "Develop a full-featured e-commerce website with shopping cart and payment integration.",
                     "timeline": {
