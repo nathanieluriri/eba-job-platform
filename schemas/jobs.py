@@ -7,6 +7,7 @@
 #
 # ============================================================================
 
+from schemas.agent import AgentOut
 from schemas.imports import *
 from pydantic import Field
 
@@ -17,13 +18,10 @@ class JobsBase(BaseModel):
     project_title:str
     category: JobCatgeries
     budget:int
-    description:str
-    requirement:str
-    skills_needed:Skills
+    description:str 
     timeline:JobTimeline
-    
-    pass
-
+ 
+ 
 class JobsCreate(JobsBase):
     # Add other fields here
     client_id:str
@@ -39,13 +37,17 @@ class JobsCreate(JobsBase):
         return self
 class JobsUpdate(BaseModel):
     # Add other fields here
-    skills_needed:Optional[Skills]=None
+ 
     timeline:Optional[JobTimeline]=None
     description:Optional[str]=None
     requirement:Optional[str]=None
-    skills_needed:Optional[Skills]=None
+    proposal:Optional[str]=None
+    recommended_agents:Optional[List[AgentOut]]=None
+    selected_agents:Optional[List[AgentOut]]=None
     category: Optional[JobCatgeries]=None
     admin_approved:Optional[bool] =None
+    client_approved:Optional[bool] =None
+    client_rejection_reason:Optional[str]=None
     rejection_reason:Optional[str]=None
     break_down:Optional[PriceBreakDown]=None 
     status:Optional[JobStatus]=None 
@@ -57,6 +59,11 @@ class JobsOut(JobsBase):
     id: Optional[str] =None
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
+    client_approved:Optional[bool] =False
+    proposal:Optional[str]=None
+    recommended_agents:Optional[List[AgentOut]]=None
+    selected_agents:Optional[List[AgentOut]]=None
+    client_rejection_reason:Optional[str]=None
     rejection_reason:Optional[str]=None
     isCompleted:Optional[bool]=Field(default=False)
     admin_approved:bool = Field(default=False)

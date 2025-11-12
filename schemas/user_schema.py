@@ -25,12 +25,11 @@ class UserBase(BaseModel):
     company_email: Optional[str] = None
     company_address: Optional[str] = None
     
-    services: Optional[List[Skills]] = None
+ 
     client_reason_for_signing_up: Optional[ClientReasonForSignUp] = None
     client_need_agent_work_hours_to_be: Optional[ClientNeedAgentWorkHoursToBe] = None
 
-    # Agent fields
-    primary_area_of_expertise: Optional[Skills] = None
+ 
     years_of_experience: Optional[int] = None
     three_most_commonly_used_tools_or_platforms: Optional[List[str]] = None
     available_hours_agent_can_commit: Optional[AvailableHoursAgentCanCommit] = None

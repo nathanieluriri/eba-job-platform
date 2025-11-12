@@ -22,7 +22,7 @@ class ClientBase(BaseModel):
     company_email:str 
     company_address: str
     full_name: str
-    services: List[Skills]
+   
     client_reason_for_signing_up: ClientReasonForSignUp
     client_need_agent_work_hours_to_be: ClientNeedAgentWorkHoursToBe
 

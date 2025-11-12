@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from typing import List
 from datetime import datetime, timedelta
 from core.scheduler import scheduler
+from schemas.agent import AgentOut
 from schemas.response_schema import APIResponse
 from security.auth import verify_client_token,accessTokenOut,verify_agent_token,verify_admin_token
 from schemas.jobs import (
@@ -28,6 +29,7 @@ from services.jobs_service import (
 )
 
 router = APIRouter(prefix="/jobss", tags=["Jobss"])
+# TODO: NEW FLOW FOR THE JOB POSTING IS WHEN CLIENTS POST JOBS ADMIN MAKE EDITS PLUS RECOMMEND AGENTS FOR CLIENTS TO JUDGE
 
 @router.get("/agent/available/",  description="⚠️ **REQUIRES AGENT TOKENS**", response_model=APIResponse[List[JobsOut]])
 async def list_jobss_agent_qualifies_for(start:int= Query(...,  description="where to start the query from usually 0 used to return a list of the item"),stop:int= Query(...,  description="where to end the query at usually ends withs 100 used to return a list of the item"),token:accessTokenOut = Depends(verify_agent_token)):
@@ -114,7 +116,7 @@ async def post_new_jobs(
                 "description": (
                     "Example payload for a **Client** posting a new job. "
                     "The client specifies the project title, category, budget, "
-                    "required skills, timeline, and job details. "
+                    "timeline, and job details. "
                     "System-generated fields (e.g., `client_id`, `admin_approved`, "
                     "`break_down`, `status`, `date_created`, `last_updated`) are "
                     "automatically filled by the backend.\n\n"
@@ -125,8 +127,6 @@ async def post_new_jobs(
                     "category": "Web Devlopment",  # ✅ match Enum exactly
                     "budget": 2500,
                     "description": "Develop a full-featured e-commerce website with shopping cart and payment integration.",
-                    "requirement": "Experience with React.js, Node.js, and PostgreSQL.",
-                    "skills_needed": "Web Devlopment",  # ✅ match Enum exactly
                     "timeline": {
                         "start_date": 1696224000,   # Unix timestamp for project start
                         "deadline": 1698816000      # Unix timestamp for deadline
@@ -142,7 +142,7 @@ async def post_new_jobs(
     return APIResponse(status_code=200, data=items, detail="Job posted successfully")
 
 @router.post("/reject/{job_id}")
-async def reject_new_job_posting(
+async def admin_reject_new_job_posting(
     job_id: str,
     job_data: JobsUpdate = Body(
         openapi_examples={
@@ -173,25 +173,27 @@ async def reject_new_job_posting(
     elif old_data.admin_approved==True:
         return APIResponse(status_code=400,detail="admin approved object is supposed to be false")
 
-@router.post("/approve/{job_id}")
-async def approve_new_job_posting(
+@router.post("/propose/{job_id}")
+async def admin_sending_client_job_proposal(
     job_id: str,
     job_data: JobsUpdate = Body(
         openapi_examples={
-            "approve_job": {
-                "summary": "Approve Job Example ",
+            "proposal": {
+                "summary": "Send Job Proposal Example ",
                 "description": (
-                    "Example payload for an **Admin** approving a job posting. "
+                    "Example payload for an **Admin** Sending a proposal about a job posting. "
                     "The admin sets `admin_approved` to `true` and applies charges and tax, "
                     "both represented as percentages."
                     "⚠️**REQUIRES ADMIN TOKENS**"
                 ),
                 "value": {
                     "admin_approved": True,
+                    "recommended_agents":["agent1","agent2","agent3"],
+                    "proposal":"Some Text the admin sends to the client",
                     "break_down": {
-                        "Charges": 10,   # 10% service charge
-                        "Tax": 7         # 7% tax
-                    }
+                        "Charges": 7,   # 7% service charge
+                        "Tax": 10      # 10% tax
+                    },
                 },
             }
         }
@@ -200,13 +202,77 @@ async def approve_new_job_posting(
 ):
     
     old_data =await retrieve_jobs_by_jobs_id(id=job_id)
-    if old_data.admin_approved == False:
-        
-        data = JobsUpdate(admin_approved=True, break_down=job_data.break_down)
+    if old_data.admin_approved == False and old_data.client_approved==False:
+
+        data = JobsUpdate(admin_approved=True, break_down=job_data.break_down,recommended_agents=job_data.recommended_agents,proposal=job_data.proposal)
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
         
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
     else: raise HTTPException(status_code=409,detail="admin has approved already")
+    
+    
+    
+
+@router.post("client/accept-proposal/{job_id}")
+async def client_accepting_admin_job_proposal(
+    job_id: str,
+    job_data: JobsUpdate = Body(
+        openapi_examples={
+            "accept_proposal": {
+                "summary": "Accept Job Proposal Example ",
+                "description": (
+                    "Example payload for a **client** Accepting a proposal about a job posting. "
+                    "The Client sets `client_approved` to `true` and selects Agents To Work With "
+                    
+                    "⚠️**REQUIRES CLIENT TOKENS**"
+                ),
+                "value": {
+                    "client_approved": True,
+                    "selected_agents":["agent1","agent2","agent3"],
+                     
+                     
+                },
+            }
+        }
+    ),
+        token: accessTokenOut = Depends(verify_client_token),
+):
+    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
+    if jobs:
+        data = JobsUpdate(client_approved=True, break_down=job_data.break_down,recommended_agents=job_data.recommended_agents,proposal=job_data.proposal,status=JobStatus.active) 
+        returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
+        return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
+    
+
+@router.post("client/reject-proposal/{job_id}")
+async def client_rejecting_admin_job_proposal(
+    job_id: str,
+    job_data: JobsUpdate = Body(
+        openapi_examples={
+            "reject_proposal": {
+                "summary": "Reject Job Proposal Example ",
+                "description": (
+                    "Example payload for a **client** Rejecting a proposal about a job posting. "
+                    "The Client sets `client_approved` to `false` and Writes Rejection Reason "
+                    
+                    "⚠️**REQUIRES CLIENT TOKENS**"
+                ),
+                "value": {
+                    "client_approved": False,
+                    "client_rejection_reason":"Just because of the price and I didn't like the agents you showed me",
+                },
+            }
+        }
+    ),
+        token: accessTokenOut = Depends(verify_client_token),
+):
+    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
+    if jobs:
+        data = JobsUpdate(client_approved=False,client_rejection_reason=job_data.client_rejection_reason, break_down=job_data.break_down,recommended_agents=job_data.recommended_agents,proposal=job_data.proposal,status=JobStatus.active) 
+        returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
+        return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
+    
+    
     
     
 @router.patch("/mark-completed/{job_id}", response_model=APIResponse[JobsOut],dependencies=[Depends(verify_client_token)])
@@ -214,7 +280,7 @@ async def client_should_use_this_to_mark_job_as_complete(job_id:str,token:access
     jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
     if jobs:
         print(jobs)  
-        update_data = JobsUpdate(isCompleted=True) 
+        update_data = JobsUpdate(isCompleted=True,status=JobStatus.completed) 
         item = await update_jobs_by_id(jobs_id=job_id,jobs_data=update_data,status=JobStatus.completed)
         
         return APIResponse(status_code=200, data=item, detail="applications updated successfully")

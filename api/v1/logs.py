@@ -40,7 +40,7 @@ async def list_logss(job_id:str,token: accessTokenOut = Depends(verify_agent_tok
 
 @router.get("/client/list/{job_id}", response_model=APIResponse[List[LogsOut]])
 async def list_logss(job_id:str,token: accessTokenOut = Depends(verify_client_token),start:int=0,stop:int=100):
-  
+    
     Job =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
     if Job !=None:
         items = await retrieve_logss(job_id=job_id,start=start,stop=stop)

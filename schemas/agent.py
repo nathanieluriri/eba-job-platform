@@ -19,7 +19,7 @@ class AgentBase(BaseModel):
     certificate_url: List[str]
     video_url: str
     personality_url: str
-    primary_area_of_expertise: Skills 
+  
     years_of_experience: int 
     three_most_commonly_used_tools_or_platforms: List[str] 
     available_hours_agent_can_commit: AvailableHoursAgentCanCommit
