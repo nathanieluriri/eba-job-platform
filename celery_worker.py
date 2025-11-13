@@ -63,7 +63,7 @@ def add_new_alert(alert: AlertsBase):
     
     
 @celery_app.task(name="celery_worker.add_new_job")
-def add_new_job(job:JobsBase):
+async def add_new_job(job:JobsBase):
     async def _add_new_job():
         
         new_data = JobsCreate(**job)
