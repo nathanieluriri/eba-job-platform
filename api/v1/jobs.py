@@ -133,7 +133,7 @@ async def post_new_jobs(
                     "project_title": "E-commerce Website Development",
                     "primary_area_of_expertise": "Web Devlopment",  # ✅ match Enum exactly
                     "budget": 2500,
-                    "budget": 2500,
+                     
                     "description": "Develop a full-featured e-commerce website with shopping cart and payment integration.",
                     "timeline": {
                         "start_date": 1696224000,   # Unix timestamp for project start
@@ -150,7 +150,7 @@ async def post_new_jobs(
     
     job_data = JobsCreate(**data.model_dump(), client_id=token.userId,recommended_agents=items)
     # items = await add_jobs(jobs_data=job_data)
-    result = celery_app.send_task(name="celery_worker.add_new_job",args=job_data.model_dump())
+    result = celery_app.send_task(name="celery_worker.add_new_job",args=[job_data.model_dump()])
     return APIResponse(status_code=200, data=result, detail="Job posted successfully")
 
 @router.post("/reject/{job_id}")
@@ -320,9 +320,9 @@ async def client_setting_meeting(
                 admin_alert =AlertsBase(user_type=UserTypes.admin,user_id="admin_id",priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}, {jobs.budget}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
                 # Make the db functions go to the queue
                 # new_client_alert = await add_alerts(alerts_data=client_alert)
-                celery_app.send_task("celery_worker.add_new_alert",args=client_alert.model_dump())
-                celery_app.send_task("celery_worker.add_new_alert",args=agent_alert.model_dump())
-                celery_app.send_task("celery_worker.add_new_alert",args=admin_alert.model_dump())
+                celery_app.send_task("celery_worker.add_new_alert",args=[client_alert.model_dump()])
+                celery_app.send_task("celery_worker.add_new_alert",args=[agent_alert.model_dump()])
+                celery_app.send_task("celery_worker.add_new_alert",args=[admin_alert.model_dump()])
                 
                 
                 return APIResponse(status_code=200,data="Meeting has been set you will receive a notification soon",detail="Successfully set job-meeting")
