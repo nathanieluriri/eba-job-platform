@@ -61,6 +61,7 @@ class JobsUpdate(BaseModel):
 
 class JobsOut(JobsBase):
     # Add other fields here 
+    client_id:str
     id: Optional[str] =None
     date_created: Optional[int] = None
     last_updated: Optional[int] = None

@@ -71,6 +71,7 @@ class PriorityStatus(str,Enum):
     
 class AlertType(str,Enum):
     new_message = "new_message"
+    meeting = "meeting_with_agent_and_client"
     task_assigned = "task_assigned"
     payment_received = "payment_received"
     payment_failed = "payment_failed"

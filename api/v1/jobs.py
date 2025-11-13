@@ -5,8 +5,11 @@ from typing import List
 from datetime import datetime, timedelta
 from core.scheduler import scheduler
 from schemas.agent import AgentOut
+from schemas.alerts import AlertsBase, AlertsCreate
+from schemas.imports import AlertType, PriorityStatus, UserTypes
 from schemas.response_schema import APIResponse
 from security.auth import verify_client_token,accessTokenOut,verify_agent_token,verify_admin_token
+from celery_worker import celery_app
 from schemas.jobs import (
     JobMeeting,
     JobsCreate,
@@ -19,6 +22,7 @@ from schemas.jobs import (
     
 )
 from bson import ObjectId
+from services.alerts_service import add_alerts
 from services.jobs_service import (
     add_jobs,
     remove_jobs,
@@ -280,7 +284,7 @@ async def client_rejecting_admin_job_proposal(
 @router.post("/client/set-meeting/")
 async def client_rejecting_admin_job_proposal(
     
-    job_data: JobMeeting = Body(
+    job_meeting_data: JobMeeting = Body(
         openapi_examples={
             "Set_meeting": {
                 "summary": "Setting Job meeting Example ",
@@ -300,11 +304,26 @@ async def client_rejecting_admin_job_proposal(
     ),
         token: accessTokenOut = Depends(verify_client_token),
 ):
-    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_data.job_id)})
+    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_meeting_data.job_id)})
     if jobs:
-         
-        return APIResponse(status_code=200,data="Meeting has been set you will receive a notification soon",detail="Successfully set job-meeting")
-    
+         for agent in jobs.selected_agents:
+            if agent.id ==job_meeting_data.agent_id:
+                client_alert =AlertsBase(user_type=UserTypes.client,user_id=token.userId,priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}, {jobs.budget}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
+                agent_alert =AlertsBase(user_type=UserTypes.agent,user_id=job_meeting_data.agent_id,priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}, {jobs.budget}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
+                admin_alert =AlertsBase(user_type=UserTypes.admin,user_id="admin_id",priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}, {jobs.budget}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
+                # Make the db functions go to the queue
+                # new_client_alert = await add_alerts(alerts_data=client_alert)
+                celery_app.send_task("celery_worker.add_new_alert",args=client_alert.model_dump())
+                celery_app.send_task("celery_worker.add_new_alert",args=agent_alert.model_dump())
+                celery_app.send_task("celery_worker.add_new_alert",args=admin_alert.model_dump())
+                
+                
+                return APIResponse(status_code=200,data="Meeting has been set you will receive a notification soon",detail="Successfully set job-meeting")
+            
+         raise HTTPException(status_code=403,detail="This agent wasn't part of the recommended agents so you cant setup a meeting with them")
+
+    else:
+        raise HTTPException(status_code=400,detail="This Job doesn't exist")
     
     
     

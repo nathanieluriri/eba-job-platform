@@ -42,7 +42,7 @@ async def update_unread_alerts(alerts: list[dict]):
 @celery_app.task(name="celery_worker.add_new_alert")
 def add_new_alert(alert: AlertsBase):
     async def _add_new_alert():
-        new_data = AlertsCreate(**alert.model_dump())
+        new_data = AlertsCreate(**alert)
         await add_alerts(alerts_data=new_data)
         
 
