@@ -29,6 +29,7 @@ class JobMeeting(BaseModel):
  
 class JobsCreate(JobsBase):
     # Add other fields here
+    recommended_agents:Optional[List[AgentOut]]=None
     client_id:str
     admin_approved:bool = Field(default=False)
     isCompleted:Optional[bool]=Field(default=False)
@@ -47,7 +48,7 @@ class JobsUpdate(BaseModel):
     description:Optional[str]=None
     requirement:Optional[str]=None
     proposal:Optional[str]=None
-    recommended_agents:Optional[List[AgentOut]]=None
+    
     selected_agents:Optional[List[AgentOut]]=None
     primary_area_of_expertise: Optional[JobCatgeries]=None
     admin_approved:Optional[bool] =None

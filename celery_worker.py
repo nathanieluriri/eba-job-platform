@@ -11,11 +11,13 @@ AlertsCreate,
 AlertsOut,
 )
 from schemas.imports import UserTypes
+from schemas.jobs import JobsBase, JobsCreate
 from services.admin_service import retrieve_admins
 from services.alerts_service import (
     update_alerts_by_id,
     add_alerts
 )
+from services.jobs_service import add_jobs
 load_dotenv()
 
 broker_url = os.getenv("CELERY_BROKER_URL")
@@ -55,3 +57,17 @@ def add_new_alert(alert: AlertsBase):
         
 
     asyncio.run(_add_new_alert())
+    
+    
+    
+    
+@celery_app.task(name="celery_worker.add_new_job")
+def add_new_job(job:JobsBase):
+    async def _add_new_job():
+        new_data = JobsCreate(**job)
+        items = await add_jobs(jobs_data=new_data)
+        
+
+    asyncio.run(_add_new_job())
+    
+    

@@ -1,7 +1,7 @@
 
 import time
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
-from typing import List
+from typing import List, Union
 from datetime import datetime, timedelta
 from core.scheduler import scheduler
 from schemas.agent import AgentOut
@@ -22,6 +22,7 @@ from schemas.jobs import (
     
 )
 from bson import ObjectId
+from services.agent_service import retrieve_agents
 from services.alerts_service import add_alerts
 from services.jobs_service import (
     add_jobs,
@@ -111,7 +112,7 @@ async def get_my_jobss(
 
 @router.post(
     "/",
-    response_model=APIResponse[JobsOut],
+    response_model=Union[APIResponse[JobsOut], APIResponse[str]],
 )
 async def post_new_jobs(
     data: JobsBase = Body(
@@ -132,6 +133,7 @@ async def post_new_jobs(
                     "project_title": "E-commerce Website Development",
                     "primary_area_of_expertise": "Web Devlopment",  # ✅ match Enum exactly
                     "budget": 2500,
+                    "budget": 2500,
                     "description": "Develop a full-featured e-commerce website with shopping cart and payment integration.",
                     "timeline": {
                         "start_date": 1696224000,   # Unix timestamp for project start
@@ -143,9 +145,13 @@ async def post_new_jobs(
     ),
     token: accessTokenOut = Depends(verify_client_token),
 ):
-    job_data = JobsCreate(**data.model_dump(), client_id=token.userId)
-    items = await add_jobs(jobs_data=job_data)
-    return APIResponse(status_code=200, data=items, detail="Job posted successfully")
+    filter_dict = {"primary_area_of_expertise":data.primary_area_of_expertise}
+    items = await retrieve_agents(start=0, stop=100,filter=filter_dict)
+    
+    job_data = JobsCreate(**data.model_dump(), client_id=token.userId,recommended_agents=items)
+    # items = await add_jobs(jobs_data=job_data)
+    result = celery_app.send_task(name="celery_worker.add_new_job",args=job_data.model_dump())
+    return APIResponse(status_code=200, data=result, detail="Job posted successfully")
 
 @router.post("/reject/{job_id}")
 async def admin_reject_new_job_posting(
