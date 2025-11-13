@@ -22,6 +22,11 @@ class JobsBase(BaseModel):
     timeline:JobTimeline
  
  
+class JobMeeting(BaseModel):
+    job_id:str
+    agent_id:str
+    meeting_time:int
+ 
 class JobsCreate(JobsBase):
     # Add other fields here
     client_id:str

@@ -7,6 +7,7 @@ from schemas.agent import AgentOut
 from schemas.response_schema import APIResponse
 from security.auth import verify_client_token,accessTokenOut,verify_agent_token,verify_admin_token
 from schemas.jobs import (
+    JobMeeting,
     JobsCreate,
     JobsOut,
     JobsBase,
@@ -213,7 +214,7 @@ async def admin_sending_client_job_proposal(
     
     
 
-@router.post("/client/accept-proposal/{job_id}")
+@router.patch("/client/accept-proposal/{job_id}")
 async def client_accepting_admin_job_proposal(
     job_id: str,
     job_data: JobsUpdate = Body(
@@ -244,7 +245,7 @@ async def client_accepting_admin_job_proposal(
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
     
 
-@router.post("/client/reject-proposal/{job_id}")
+@router.patch("/client/reject-proposal/{job_id}")
 async def client_rejecting_admin_job_proposal(
     job_id: str,
     job_data: JobsUpdate = Body(
@@ -271,6 +272,37 @@ async def client_rejecting_admin_job_proposal(
         data = JobsUpdate(client_approved=False,client_rejection_reason=job_data.client_rejection_reason, break_down=job_data.break_down,recommended_agents=job_data.recommended_agents,proposal=job_data.proposal,status=JobStatus.active) 
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
+    
+    
+    
+
+@router.post("/client/set-meeting/")
+async def client_rejecting_admin_job_proposal(
+    
+    job_data: JobMeeting = Body(
+        openapi_examples={
+            "Set_meeting": {
+                "summary": "Setting Job meeting Example ",
+                "description": (
+                    "Example payload for a **client** setting a meeting about a job posting with an agent. "
+                    "The Client sets `client_approved` to `false` and Writes Rejection Reason "
+                    
+                    "⚠️**REQUIRES CLIENT TOKENS**"
+                ),
+                "value": {
+                    "job_id": False,
+                    "agent_id":"Just because of the price and I didn't like the agents you showed me",
+                    "meeting_time":datetime.now()
+                },
+            }
+        }
+    ),
+        token: accessTokenOut = Depends(verify_client_token),
+):
+    jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_data.job_id)})
+    if jobs:
+         
+        return APIResponse(status_code=200,data="Meeting has been set you will receive a notification soon",detail="Successfully set job-meeting")
     
     
     
