@@ -197,6 +197,7 @@ async def admin_sending_client_job_proposal(
                     "recommended_agents":["agent1","agent2","agent3"],
                     "proposal":"Some Text the admin sends to the client",
                     "break_down": {
+                        "service":1000,
                         "Charges": 7,   # 7% service charge
                         "Tax": 10      # 10% tax
                     },
@@ -282,7 +283,7 @@ async def client_rejecting_admin_job_proposal(
     
 
 @router.post("/client/set-meeting/")
-async def client_rejecting_admin_job_proposal(
+async def client_setting_meeting(
     
     job_meeting_data: JobMeeting = Body(
         openapi_examples={
