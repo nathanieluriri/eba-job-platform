@@ -145,10 +145,9 @@ async def post_new_jobs(
     ),
     token: accessTokenOut = Depends(verify_client_token),
 ):
-    filter_dict = {"primary_area_of_expertise":data.primary_area_of_expertise}
-    items = await retrieve_agents(start=0, stop=100,filter=filter_dict)
+
     
-    job_data = JobsCreate(**data.model_dump(), client_id=token.userId,recommended_agents=items)
+    job_data = JobsCreate(**data.model_dump(), client_id=token.userId)
     # items = await add_jobs(jobs_data=job_data)
     result = celery_app.send_task(name="celery_worker.add_new_job",args=[job_data.model_dump()])
     return APIResponse(status_code=200, data=f"{result}", detail="Job posted successfully")
