@@ -1,7 +1,7 @@
 
 import time
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
-from typing import List, Union
+from typing import Any, List, Union
 from datetime import datetime, timedelta
 from core.scheduler import scheduler
 from schemas.agent import AgentOut
@@ -112,7 +112,7 @@ async def get_my_jobss(
 
 @router.post(
     "/",
-    response_model=Union[APIResponse[JobsOut], APIResponse[str]],
+    response_model= APIResponse[Any],
 )
 async def post_new_jobs(
     data: JobsBase = Body(
@@ -151,7 +151,7 @@ async def post_new_jobs(
     job_data = JobsCreate(**data.model_dump(), client_id=token.userId,recommended_agents=items)
     # items = await add_jobs(jobs_data=job_data)
     result = celery_app.send_task(name="celery_worker.add_new_job",args=[job_data.model_dump()])
-    return APIResponse(status_code=200, data=f"task_id:{result}", detail="Job posted successfully")
+    return APIResponse(status_code=200, data=f"{result}", detail="Job posted successfully")
 
 @router.post("/reject/{job_id}")
 async def admin_reject_new_job_posting(
