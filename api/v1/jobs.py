@@ -151,7 +151,7 @@ async def post_new_jobs(
     job_data = JobsCreate(**data.model_dump(), client_id=token.userId,recommended_agents=items)
     # items = await add_jobs(jobs_data=job_data)
     result = celery_app.send_task(name="celery_worker.add_new_job",args=[job_data.model_dump()])
-    return APIResponse(status_code=200, data=result, detail="Job posted successfully")
+    return APIResponse(status_code=200, data=f"task_id:{result}", detail="Job posted successfully")
 
 @router.post("/reject/{job_id}")
 async def admin_reject_new_job_posting(
