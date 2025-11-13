@@ -1,4 +1,5 @@
 
+import time
 from fastapi import APIRouter, HTTPException, Query, status, Path,Depends,Body
 from typing import List
 from datetime import datetime, timedelta
@@ -290,9 +291,9 @@ async def client_rejecting_admin_job_proposal(
                     "⚠️**REQUIRES CLIENT TOKENS**"
                 ),
                 "value": {
-                    "job_id": False,
-                    "agent_id":"Just because of the price and I didn't like the agents you showed me",
-                    "meeting_time":datetime.now()
+                    "job_id": "job_sadsdsaa",
+                    "agent_id":"agent_sadsdsaa",
+                    "meeting_time":int(time.time())
                 },
             }
         }
