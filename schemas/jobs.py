@@ -41,14 +41,20 @@ class JobsCreate(JobsBase):
     def set_dynamic_values(self)-> Self:
         self.break_down=PriceBreakDown(Charges=5,Tax=5)
         return self
+    
+class JobsProposal(BaseModel):
+    proposal:str
+    agent:AgentOut
+    break_down:Optional[PriceBreakDown]=None 
+    timeline:Optional[JobTimeline]=None
+    
 class JobsUpdate(BaseModel):
     # Add other fields here
  
     timeline:Optional[JobTimeline]=None
     description:Optional[str]=None
     requirement:Optional[str]=None
-    proposal:Optional[str]=None
-    
+     
     selected_agents:Optional[List[AgentOut]]=None
     primary_area_of_expertise: Optional[JobCatgeries]=None
     admin_approved:Optional[bool] =None

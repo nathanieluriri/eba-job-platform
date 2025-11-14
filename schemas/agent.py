@@ -39,7 +39,7 @@ class AgentUpdate(BaseModel):
     # Add other fields here 
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
-class AgentOut(BaseModel):
+class AgentOut(AgentBase):
     id: Optional[str] = Field(default=None)
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
