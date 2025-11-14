@@ -61,25 +61,29 @@ async def add_new_alert(alert: AlertsBase):
     
     
     
-@celery_app.task(name="celery_worker.add_new_job")
-async def add_new_job(job:JobsBase):    
-    new_data = JobsCreate(**job)
-    filter_dict = {"primary_area_of_expertise":new_data.primary_area_of_expertise}
-    agents = await retrieve_agents(start=0, stop=100,filter=filter_dict)
-    new_data.recommended_agents=agents
-    new_job = await add_jobs(jobs_data=new_data)
-    alert_client = AlertsCreate(user_type=UserTypes.client,user_id=new_data.client_id,priority=PriorityStatus.medium,alert_type=AlertType.generic_notification,alert_title="New Job Created Successfully",alert_description=f"You Just created a new job titled: {new_job.project_title}",alert_primary_action="Set meetings ",alert_secondary_action="Cancel",)
-    await add_alerts(alerts_data=alert_client)
-    for agent in agents:
-        alert_agent = AlertsCreate(user_type=UserTypes.agent,user_id=agent.id,priority=PriorityStatus.medium,alert_type=AlertType.generic_notification,alert_title="New Job Posted and you were recommended",alert_description=f"You Just got recommended for a new job titled: {new_job.project_title}",alert_primary_action="Mark as read ",alert_secondary_action="Ignore",)
-        await add_alerts(alerts_data=alert_agent)
-    list_of_admins =await retrieve_admins(start=0,stop=100)
-    for admin in list_of_admins:
-        alert_admin = AlertsCreate(user_type=UserTypes.admin,user_id=admin.id,priority=PriorityStatus.medium,alert_type=AlertType.generic_notification,alert_title="New Job Created Successfully",alert_description=f"Client Just created a new job titled: {new_job.project_title}",alert_primary_action="Mark as read",alert_secondary_action="Cancel",)
-        
-        await add_alerts(alerts_data=alert_admin)
-        
-    return new_job.model_dump()
+@celery_app.task(name="celery_worker.add_new_job",bind=True, max_retries=3, default_retry_delay=5)
+async def add_new_job(self,job:JobsBase): 
+    try:   
+        new_data = JobsCreate(**job)
+        filter_dict = {"primary_area_of_expertise":new_data.primary_area_of_expertise}
+        agents = await retrieve_agents(start=0, stop=100,filter=filter_dict)
+        new_data.recommended_agents=agents
+        new_job = await add_jobs(jobs_data=new_data)
+        alert_client = AlertsCreate(user_type=UserTypes.client,user_id=new_data.client_id,priority=PriorityStatus.medium,alert_type=AlertType.generic_notification,alert_title="New Job Created Successfully",alert_description=f"You Just created a new job titled: {new_job.project_title}",alert_primary_action="Set meetings ",alert_secondary_action="Cancel",)
+        await add_alerts(alerts_data=alert_client)
+        for agent in agents:
+            alert_agent = AlertsCreate(user_type=UserTypes.agent,user_id=agent.id,priority=PriorityStatus.medium,alert_type=AlertType.generic_notification,alert_title="New Job Posted and you were recommended",alert_description=f"You Just got recommended for a new job titled: {new_job.project_title}",alert_primary_action="Mark as read ",alert_secondary_action="Ignore",)
+            await add_alerts(alerts_data=alert_agent)
+        list_of_admins =await retrieve_admins(start=0,stop=100)
+        for admin in list_of_admins:
+            alert_admin = AlertsCreate(user_type=UserTypes.admin,user_id=admin.id,priority=PriorityStatus.medium,alert_type=AlertType.generic_notification,alert_title="New Job Created Successfully",alert_description=f"Client Just created a new job titled: {new_job.project_title}",alert_primary_action="Mark as read",alert_secondary_action="Cancel",)
+            
+            await add_alerts(alerts_data=alert_admin)
+            
+        return new_job.model_dump()
+    except Exception as exc:
+        # Retry the task
+        raise self.retry(exc=exc)
     
  
     
