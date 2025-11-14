@@ -38,32 +38,14 @@ class AgentCreate(AgentBase):
 class AgentUpdate(BaseModel):
     # Add other fields here 
     last_updated: int = Field(default_factory=lambda: int(time.time()))
-
-class AgentOut(AgentBase):
-    id:Optional[ObjectId] = Field(default=None, alias="_id")
+class AgentOut(BaseModel):
+    id: Optional[str] = Field(default=None, alias="_id")
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
 
-    # 👉 Include MongoDB fields if needed
-     
-
-    @model_validator(mode="before")
-    @classmethod
-    def populate_id(cls, values):
-        """
-        Convert MongoDB _id to string id before validation.
-        """
-        mongo_id = values.get("_id")
-        if mongo_id:
-            values["id"] = str(mongo_id)
-        return values
-
     class Config:
-        # allow aliasing like _id → id
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        
-        # Convert ObjectId to string when serializing
+        populate_by_name = True  # allows using `id` when constructing the model
+        arbitrary_types_allowed = True  # allows ObjectId type
         json_encoders = {
-            ObjectId: lambda v: str(v)
+            ObjectId: str  # automatically converts ObjectId → str
         }
