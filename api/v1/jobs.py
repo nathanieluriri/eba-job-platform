@@ -340,7 +340,7 @@ async def client_setting_meeting(
 ):
     jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_meeting_data.job_id)})
     if jobs:
-         for agent in jobs.selected_agents:
+         for agent in jobs.recommended_agents:
             if agent.id ==job_meeting_data.agent_id:
                 client_alert =AlertsBase(user_type=UserTypes.client,user_id=token.userId,priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}, {jobs.budget}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
                 agent_alert =AlertsBase(user_type=UserTypes.agent,user_id=job_meeting_data.agent_id,priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}, {jobs.budget}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
