@@ -45,19 +45,18 @@ async def update_unread_alerts(alerts: list[dict]):
     return "done"
     
 @celery_app.task(name="celery_worker.add_new_alert")
-def add_new_alert(alert: AlertsBase):
-    async def _add_new_alert():
-        new_data = AlertsCreate(**alert)
-        if new_data.user_type == UserTypes.admin:
-            list_of_admins =await retrieve_admins(start=0,stop=100)
-            for admin in list_of_admins:
-                new_data.user_id = admin.id
-                await add_alerts(alerts_data=new_data)     
-        if new_data.user_type != UserTypes.admin:   
-            await add_alerts(alerts_data=new_data)
+async def add_new_alert(alert: AlertsBase):
+    new_data = AlertsCreate(**alert)
+    if new_data.user_type == UserTypes.admin:
+        list_of_admins =await retrieve_admins(start=0,stop=100)
+        for admin in list_of_admins:
+            new_data.user_id = admin.id
+            await add_alerts(alerts_data=new_data)     
+    if new_data.user_type != UserTypes.admin:   
+        await add_alerts(alerts_data=new_data)
         
 
-    asyncio.run(_add_new_alert())
+     
     
     
     

@@ -146,9 +146,7 @@ async def post_new_jobs(
     token: accessTokenOut = Depends(verify_client_token),
 ):
 
-    
     job_data = JobsCreate(**data.model_dump(), client_id=token.userId)
-    # items = await add_jobs(jobs_data=job_data)
     result = celery_app.send_task(name="celery_worker.add_new_job",args=[job_data.model_dump()])
     return APIResponse(status_code=200, data=f"{result}", detail="Job posted successfully")
 
