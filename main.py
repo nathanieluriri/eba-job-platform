@@ -251,23 +251,22 @@ async def test_celery():
     
 @app.get("/task/{task_id}")
 def get_task_status(task_id: str):
-    result = AsyncResult(task_id, app=celery_app)
+    result = celery_app.AsyncResult(task_id)
 
     response = {
         "task_id": task_id,
-        "state": result.state,         # PENDING, STARTED, SUCCESS, FAILURE, RETRY
+        "state": result.state,    # PENDING, STARTED, SUCCESS, FAILURE
         "ready": result.ready(),
     }
 
-    # If task completed successfully, include result
     if result.successful():
         response["result"] = result.get()
 
-    # If task failed, include error message
     elif result.failed():
         response["error"] = str(result.result)
 
     return response
+
    
 @app.get("/")
 def read_root():
