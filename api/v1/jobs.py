@@ -188,62 +188,57 @@ async def admin_sending_client_job_proposal(
     job_data: JobsUpdate = Body(
         openapi_examples={
             "proposal": {
-                "summary": "Send Job Proposal Example ",
+                "summary": "Send Job Proposal Example",
                 "description": (
-                    "Example payload for an **Admin** Sending a proposal about a job posting. "
-                    "The admin sets `admin_approved` to `true` and applies charges and tax, "
-                    "both represented as percentages."
-                    "⚠️**REQUIRES ADMIN TOKENS**"
+                    "Example payload for an **Admin** sending a proposal about a job posting. "
+                    "The admin sets `admin_approved` to `true` and applies charges and tax. "
+                    "⚠️ **REQUIRES ADMIN TOKENS**"
                 ),
                 "value": {
                     "agent": {
-                        {
-  "id": "67514f4bf011bc33ab3c25e9",
-  "_id": "67514f4bf011bc33ab3c25e9",
-  "email": "agent@example.com",
-  "password": "$2b$12$ZW5jcnlwdGVkLWhhc2gtcGFzc3dvcmQ", 
-  "full_name": "John Doe",
-  "phone_number": "+2348012345678",
-  "certificate_url": [
-    "https://example.com/certificates/cert1.pdf",
-    "https://example.com/certificates/cert2.pdf"
-  ],
-  "video_url": "https://example.com/videos/intro.mp4",
-  "personality_url": "https://example.com/personality/assessment.pdf",
-  "primary_area_of_expertise": "software_development",
-  "years_of_experience": 5,
-  "three_most_commonly_used_tools_or_platforms": [
-    "Figma",
-    "Slack",
-    "Jira"
-  ],
-  "available_hours_agent_can_commit": "20_hours_per_week",
-  "time_zone": "+01:00",
-  "portfolio_link": "https://portfolio.example.com/john-doe",
-  "is_agent_open_to_calls_and_video_meetings": True,
-  "does_agent_have_working_computer": True,
-  "does_agent_have_stable_internet": True,
-  "is_agent_comfortable_with_time_tracking_tools": True,
-  "date_created": 1763115507,
-  "last_updated": 1763115507
-}
-
+                        "id": "67514f4bf011bc33ab3c25e9",
+                        "email": "agent@example.com",
+                        "password": "$2b$12$ZW5jcnlwdGVkLWhhc2gtcGFzc3dvcmQ",
+                        "full_name": "John Doe",
+                        "phone_number": "+2348012345678",
+                        "certificate_url": [
+                            "https://example.com/certificates/cert1.pdf",
+                            "https://example.com/certificates/cert2.pdf"
+                        ],
+                        "video_url": "https://example.com/videos/intro.mp4",
+                        "personality_url": "https://example.com/personality/assessment.pdf",
+                        "primary_area_of_expertise": "software_development",
+                        "years_of_experience": 5,
+                        "three_most_commonly_used_tools_or_platforms": [
+                            "Figma",
+                            "Slack",
+                            "Jira"
+                        ],
+                        "available_hours_agent_can_commit": "20_hours_per_week",
+                        "time_zone": "+01:00",
+                        "portfolio_link": "https://portfolio.example.com/john-doe",
+                        "is_agent_open_to_calls_and_video_meetings": True,
+                        "does_agent_have_working_computer": True,
+                        "does_agent_have_stable_internet": True,
+                        "is_agent_comfortable_with_time_tracking_tools": True,
+                        "date_created": 1763115507,
+                        "last_updated": 1763115507
                     },
-                    "timeline":{
-                        "start_date":int(time.time()),
-                        "deadline":int(time.time())
+                    "timeline": {
+                        "start_date": int(time.time()),
+                        "deadline": int(time.time())
                     },
-                    "proposal":"Some Text the admin sends to the client",
+                    "proposal": "Some text the admin sends to the client",
                     "break_down": {
-                        "service":1000,
-                        "Charges": 7,   # 7% service charge
-                        "Tax": 10      # 10% tax
-                    },
-                },
+                        "service": 1000,
+                        "Charges": 7,  # 7%
+                        "Tax": 10      # 10%
+                    }
+                }
             }
         }
     ),
-        token: accessTokenOut = Depends(verify_admin_token),
+    token: accessTokenOut = Depends(verify_admin_token),
 ):
     
     old_data =await retrieve_jobs_by_jobs_id(id=job_id)

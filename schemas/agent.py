@@ -40,12 +40,12 @@ class AgentUpdate(BaseModel):
     last_updated: int = Field(default_factory=lambda: int(time.time()))
 
 class AgentOut(AgentBase):
-    id: Optional[str] = Field(default=None)
+    id:Optional[ObjectId] = Field(default=None, alias="_id")
     date_created: Optional[int] = None
     last_updated: Optional[int] = None
 
     # 👉 Include MongoDB fields if needed
-    _id: Optional[ObjectId] = Field(default=None, alias="_id")
+     
 
     @model_validator(mode="before")
     @classmethod
