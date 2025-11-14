@@ -197,7 +197,6 @@ async def admin_sending_client_job_proposal(
                 ),
                 "value": {
                     "admin_approved": True,
-                    "recommended_agents":["agent1","agent2","agent3"],
                     "proposal":"Some Text the admin sends to the client",
                     "break_down": {
                         "service":1000,
