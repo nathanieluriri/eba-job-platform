@@ -78,6 +78,8 @@ async def add_new_job(job:JobsBase):
         alert_admin = AlertsCreate(user_type=UserTypes.admin,user_id=admin.id,priority=PriorityStatus.medium,alert_type=AlertType.generic_notification,alert_title="New Job Created Successfully",alert_description=f"Client Just created a new job titled: {new_job.project_title}",alert_primary_action="Mark as read",alert_secondary_action="Cancel",)
         
         await add_alerts(alerts_data=alert_admin)
+        
+    return new_job.model_dump()
     
  
     
