@@ -243,8 +243,15 @@ async def admin_sending_client_job_proposal(
     
     old_data =await retrieve_jobs_by_jobs_id(id=job_id)
     if old_data.admin_approved == False and old_data.client_approved==False:
-
-        data = JobsUpdate(admin_approved=True, break_down=job_data.break_down,recommended_agents=job_data.recommended_agents,proposal=job_data.proposal)
+        for selected_agent in old_data.selected_agents:
+            if selected_agent ==job_data.agent:
+                raise HTTPException(status_code=409,detail="admin has already sent agent and client this proposal before")
+        
+        old_data.selected_agents.append(job_data.agent)
+        
+        data = JobsUpdate(admin_approved=True, break_down=job_data.break_down,selected_agents=old_data.selected_agents,proposal=job_data.proposal)
+        client_alert =AlertsBase(user_type=UserTypes.client,user_id=old_data.client_id,priority=PriorityStatus.very_high,alert_type=AlertType.new_message,alert_title=f"Admin Just Sent you a proposal on the Job: {old_data.project_title}",alert_description=f"Admin Just Sent you a proposal on the Job {old_data.project_title}, ",alert_primary_action="Mark as Read")
+        celery_app.send_task("celery_worker.add_new_alert",args=[client_alert.model_dump()])
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
         
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
@@ -368,8 +375,18 @@ async def client_should_use_this_to_mark_job_as_complete(job_id:str,token:access
           
         update_data = JobsUpdate(isCompleted=True,status=JobStatus.completed) 
         item = await update_jobs_by_id(jobs_id=job_id,jobs_data=update_data,status=JobStatus.completed)
+        client_alert =AlertsBase(user_type=UserTypes.client,user_id=token.userId,priority=PriorityStatus.very_high,alert_type=AlertType.agent_completion_update,alert_title=f"Client Just Completed the Job: {jobs.project_title}",alert_description=f" {jobs.project_title}, {jobs.description}, {jobs.budget} has reached completion",alert_primary_action="Mark as Read")
+        celery_app.send_task("celery_worker.add_new_alert",args=[client_alert.model_dump()])
+        for selected_agent in jobs.selected_agents:
+            agent_alert =AlertsBase(user_type=UserTypes.agent,user_id=selected_agent.id,priority=PriorityStatus.very_high,alert_type=AlertType.agent_completion_update,alert_title=f"Client Just Completed the Job: {jobs.project_title}",alert_description=f" {jobs.project_title}, {jobs.description}, {jobs.budget} has reached completion",alert_primary_action="Mark as Read")
+            celery_app.send_task("celery_worker.add_new_alert",args=[agent_alert.model_dump()])
+        # Make the db functions go to the queue
+        # new_client_alert = await add_alerts(alerts_data=client_alert)
         
+        
+
         return APIResponse(status_code=200, data=item, detail="applications updated successfully")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
+
 
 

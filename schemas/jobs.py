@@ -50,7 +50,7 @@ class JobsProposal(BaseModel):
     
 class JobsUpdate(BaseModel):
     # Add other fields here
- 
+    agent:Optional[AgentOut]=None
     timeline:Optional[JobTimeline]=None
     description:Optional[str]=None
     requirement:Optional[str]=None
