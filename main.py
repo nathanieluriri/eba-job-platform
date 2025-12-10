@@ -68,68 +68,7 @@ app = FastAPI(
     summary=" A RESTful backend service built with **FastAPI** that manages user accounts, authentication, job logs, and client interactions for a job management system. The API supports secure communication through JWT-based authentication for both users and clients. It provides structured, versioned endpoints for updating profiles, managing job logs, and tracking approvals between agents and clients.",
    
 )
-# app = FastAPI(
-# lifespan=lifespan,
-# title="JOB PLATFORM REST API",
 
-# summary="""
-# API Summary:
-
-# A RESTful backend service built with **FastAPI** that manages user accounts, authentication, job logs, and client interactions for a job management system. The API supports secure communication through JWT-based authentication for both users and clients. It provides structured, versioned endpoints for updating profiles, managing job logs, and tracking approvals between agents and clients.
-# """,
-# description="""
-# # **API Description**
-
-# This REST API serves as the core backend for the **EBA Job Platform**, enabling communication between agents, clients, and administrators.
-# It is designed with **asynchronous FastAPI endpoints** and leverages **Pydantic models** for validation and type safety.
-# ---
-# #### **Key Features**
-
-# * **User Management**
-
-#   * Create and update user profiles.
-#   * Modify notification settings (email, push, in-app, marketing).
-#   * Restricted fields (e.g., password, admin approval) protected from direct edits.
-
-# * **Authentication**
-
-#   * Token-based authentication (JWT) for secure access.
-#   * Client-specific token validation via `verify_client_token`.
-#   * Middleware for unified authorization checks.
-
-# * **Job Logs & Approvals**
-
-#   * Agents can submit and update work logs.
-#   * Clients can approve or reject logs with proper verification.
-#   * Tracks approval states (`client_approved`, `admin_approved`, etc.) for audit consistency.
-
-# * **Error Handling**
-
-#   * Uniform API responses wrapped in an `APIResponse` schema.
-#   * Structured error messages for validation and request failures.
-
-# * **Scalability & Maintainability**
-
-#   * Modular route definitions under `/v1/` namespace.
-#   * Asynchronous I/O for improved performance.
-#   * Ready for containerized deployment (e.g., Docker, Uvicorn, Nginx proxy).
-
-# ---
-
-# ### **Tech Stack**
-
-# * **Tools:** FastAPI (async), Celery, Flower, Mongodb, Redis etc 
-# * **Language:** Python 3.10+
-# * **Schema Validation:** Pydantic v2
-# * **Database Layer:** Async ORM MONGODB Motor
-# * **Auth:** JWT OAuth2 Bearer tokens/ SESSION BASED OAuth2 Bearer tokens 
-# * **Docs:** OpenAPI 3.1 auto-generated (Swagger / Redoc)
-# * **Deployment:** Dockerized service with Gunicorn 
-
-
-
-#     """,
-#     version="0.1.0",)
 
 
 app.add_middleware(RequestTimingMiddleware)
