@@ -54,7 +54,7 @@ class JobsUpdate(BaseModel):
     timeline:Optional[JobTimeline]=None
     description:Optional[str]=None
     requirement:Optional[str]=None
-     
+    proposal:Optional[str]=None
     selected_agents:Optional[List[AgentOut]]=None
     primary_area_of_expertise: Optional[JobCatgeries]=None
     admin_approved:Optional[bool] =None
