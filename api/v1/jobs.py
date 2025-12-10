@@ -251,7 +251,7 @@ async def admin_sending_client_job_proposal(
         old_data.selected_agents.append(job_data.agent)
         
         data = JobsUpdate(admin_approved=True, break_down=job_data.break_down,selected_agents=old_data.selected_agents,proposal=job_data.proposal)
-        client_alert =AlertsBase(user_type=UserTypes.client,user_id=old_data.client_id,priority=PriorityStatus.very_high,alert_type=AlertType.new_message,alert_title=f"Admin Just Sent you a proposal on the Job: {old_data.project_title}",alert_description=f"Admin Just Sent you a proposal on the Job {old_data.project_title}, ",alert_primary_action="Mark as Read")
+        client_alert =AlertsBase(user_type=UserTypes.client,user_id=old_data.client_id,priority=PriorityStatus.very_high,alert_type=AlertType.new_message,alert_title=f"Admin Just Sent you a proposal on the Job: {old_data.project_title}",alert_description=f"Admin Just Sent you a proposal on the Job {old_data.project_title}, ",alert_primary_action="Mark as Read",alert_secondary_action="")
         celery_app.send_task("celery_worker.add_new_alert",args=[client_alert.model_dump()])
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
         
