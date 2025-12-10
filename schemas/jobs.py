@@ -75,7 +75,7 @@ class JobsOut(JobsBase):
     client_approved:Optional[bool] =False
     proposal:Optional[str]=None
     recommended_agents:Optional[List[AgentOut]]=None
-    selected_agents:Optional[List[AgentOut]]=None
+    selected_agents:Optional[List[AgentOut]]=[]
     client_rejection_reason:Optional[str]=None
     rejection_reason:Optional[str]=None
     isCompleted:Optional[bool]=Field(default=False)
