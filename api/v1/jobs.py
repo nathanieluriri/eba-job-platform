@@ -243,7 +243,8 @@ async def admin_sending_client_job_proposal(
     
     old_data =await retrieve_jobs_by_jobs_id(id=job_id)
     if old_data.admin_approved == False and old_data.client_approved==False:
-        for selected_agent in old_data.selected_agents:
+        selected_agents = old_data.selected_agents or []
+        for selected_agent in selected_agents:
             if selected_agent ==job_data.agent:
                 raise HTTPException(status_code=409,detail="admin has already sent agent and client this proposal before")
         
