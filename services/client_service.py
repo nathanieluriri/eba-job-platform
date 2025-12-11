@@ -108,7 +108,7 @@ async def update_client_by_id(client_id: str, client_data: ClientUpdate) -> Clie
 
 
 async def authenticate_client(user_data:UserBase )->UserOut:
-    user = await get_client(filter_dict={"email":user_data.email})
+    user = await get_client(filter_dict={"email":user_data.email.lower})
 
     if user != None:
         if check_password(password=user_data.password,hashed=user.password ):
