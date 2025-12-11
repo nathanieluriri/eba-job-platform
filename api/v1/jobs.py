@@ -287,7 +287,7 @@ async def client_accepting_admin_job_proposal(
 ):
     jobs  =await get_jobs(filter_dict={"client_id":token.userId,"_id":ObjectId(job_id)})
     if jobs:
-        data = JobsUpdate(client_approved=True, break_down=job_data.break_down,recommended_agents=job_data.recommended_agents,proposal=job_data.proposal,status=JobStatus.active) 
+        data = JobsUpdate(client_approved=True, break_down=job_data.break_down,selected_agents=job_data.selected_agents,proposal=job_data.proposal,status=JobStatus.active) 
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
     
