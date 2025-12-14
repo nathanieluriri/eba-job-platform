@@ -22,9 +22,9 @@ async def add_user(user_data: UserCreate) -> UserOut:
     Returns:
         _type_: UserOut
     """
-    user =  await get_user(filter_dict={"email":user_data.email.lower})
+    user =  await get_user(filter_dict={"email":user_data.email.lower()})
     if user==None:
-        user_data.email = user_data.email.lower
+        user_data.email = user_data.email.lower()
         new_user= await create_user(user_data)
         access_token = await add_access_tokens(token_data=accessTokenCreate(userId=new_user.id))
         refresh_token  = await add_refresh_tokens(token_data=refreshTokenCreate(userId=new_user.id,previousAccessToken=access_token.accesstoken))
@@ -36,7 +36,7 @@ async def add_user(user_data: UserCreate) -> UserOut:
         raise HTTPException(status_code=409,detail="User Already exists")
 
 async def authenticate_user(user_data:UserBase )->UserOut:
-    user = await get_user(filter_dict={"email":user_data.email.lower})
+    user = await get_user(filter_dict={"email":user_data.email.lower()})
 
     if user != None:
         if check_password(password=user_data.password,hashed=user.password ):
