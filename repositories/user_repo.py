@@ -14,19 +14,26 @@ async def create_user(user_data: UserCreate) -> UserOut:
     return returnable_result
 
 async def get_user(filter_dict: dict) -> Optional[UserOut]:
-    try:
-        result = await db.users.find_one(filter_dict)
+    query = {}
+    import re
 
-        if result is None:
-            return None
+    CASE_INSENSITIVE_FIELDS = {"email", "username"} 
+    for key, value in filter_dict.items():
+        if key in CASE_INSENSITIVE_FIELDS and isinstance(value, str):
+            normalized = value.lower()
+            query[key] = {
+                "$regex": f"^{re.escape(normalized)}$",
+                "$options": "i"
+            }
+        else:
+            query[key] = value
 
-        return UserOut(**result)
+    result = await db.users.find_one(query)
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while fetching user: {str(e)}"
-        )
+    if result is None:
+        return None
+
+    return UserOut(**result)
     
 async def get_users(filter_dict: dict = {},start=0,stop=100) -> List[UserOut]:
     try:
