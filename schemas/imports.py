@@ -51,7 +51,7 @@ class JobCatgeries(str,Enum):
     
 class JobTimeline(BaseModel):
     start_date:int
-    deadline:int
+ 
     
     
  
