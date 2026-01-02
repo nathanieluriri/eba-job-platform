@@ -17,8 +17,49 @@ from repositories.jobs import (
     update_jobs,
     delete_jobs,
 )
-from schemas.jobs import JobsCreate, JobsUpdate, JobsOut
+from schemas.jobs import AdminJobProposal, JobsCreate, JobsUpdate, JobsOut
 from services.agent_service import retrieve_agent_by_agent_id
+
+def _agent_id_from_entry(entry) -> str | None:
+    if entry is None:
+        return None
+    if hasattr(entry, "id"):
+        return entry.id
+    if isinstance(entry, dict):
+        return entry.get("id") or entry.get("_id")
+    return None
+
+async def build_admin_proposal_update(
+    job: JobsOut,
+    proposal_data: AdminJobProposal,
+    admin_user_id: str | None,
+) -> JobsUpdate:
+    """Create a JobsUpdate payload for an admin proposal with validated agent data."""
+    if proposal_data.agent is not None:
+        agent = proposal_data.agent
+    else:
+        agent = await retrieve_agent_by_agent_id(proposal_data.agent_id)
+
+    selected_agents = list(job.selected_agents or [])
+    for selected_agent in selected_agents:
+        if _agent_id_from_entry(selected_agent) == agent.id:
+            raise HTTPException(
+                status_code=409,
+                detail="admin has already sent agent and client this proposal before",
+            )
+
+    selected_agents.append(agent)
+    return JobsUpdate(
+        admin_approved=True,
+        break_down=proposal_data.break_down,
+        selected_agents=selected_agents,
+        proposal=proposal_data.proposal,
+        timeline=proposal_data.timeline,
+        proposal_created_by_user_id=admin_user_id,
+        proposal_created_by_role="admin",
+        proposal_created_via="admin",
+        proposal_agent_id=agent.id,
+    )
 
 async def add_jobs(jobs_data: JobsCreate) -> JobsOut:
     """adds an entry of JobsCreate to the database and returns an object

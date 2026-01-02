@@ -19,6 +19,7 @@ from schemas.jobs import (
     JobStatus,
     JobsUpdate,
     JobStatus,
+    AdminJobProposal,
     
 )
 from bson import ObjectId
@@ -33,6 +34,7 @@ from services.jobs_service import (
     retrieve_jobss_for_specific_client,
     retrieve_jobss_for_specific_agents,
     get_jobs,
+    build_admin_proposal_update,
 )
 
 router = APIRouter(prefix="/jobss", tags=["Jobss"])
@@ -122,7 +124,7 @@ async def post_new_jobs(
                 "summary": "Client Job Posting Example",
                 "description": (
                     "Example payload for a **Client** posting a new job. "
-                    "The client specifies the project title, category, budget, "
+                    "The client specifies the project title, category, "
                     "timeline, and job details. "
                     "System-generated fields (e.g., `client_id`, `admin_approved`, "
                     "`break_down`, `status`, `date_created`, `last_updated`) are "
@@ -132,7 +134,6 @@ async def post_new_jobs(
                 "value": {
                     "project_title": "E-commerce Website Development",
                     "primary_area_of_expertise": "Web Devlopment",  # ✅ match Enum exactly
-                    "budget": 2500,
                      
                     "description": "Develop a full-featured e-commerce website with shopping cart and payment integration.",
                     "timeline": {
@@ -185,7 +186,7 @@ async def admin_reject_new_job_posting(
 @router.post("/propose/{job_id}")
 async def admin_sending_client_job_proposal(
     job_id: str,
-    job_data: JobsUpdate = Body(
+    job_data: AdminJobProposal = Body(
         openapi_examples={
             "proposal": {
                 "summary": "Send Job Proposal Example",
@@ -195,35 +196,7 @@ async def admin_sending_client_job_proposal(
                     "⚠️ **REQUIRES ADMIN TOKENS**"
                 ),
                 "value": {
-                    "agent": {
-                        "id": "67514f4bf011bc33ab3c25e9",
-                        "email": "agent@example.com",
-                        "password": "$2b$12$ZW5jcnlwdGVkLWhhc2gtcGFzc3dvcmQ",
-                        "full_name": "John Doe",
-                        "phone_number": "+2348012345678",
-                        "certificate_url": [
-                            "https://example.com/certificates/cert1.pdf",
-                            "https://example.com/certificates/cert2.pdf"
-                        ],
-                        "video_url": "https://example.com/videos/intro.mp4",
-                        "personality_url": "https://example.com/personality/assessment.pdf",
-                        "primary_area_of_expertise": "software_development",
-                        "years_of_experience": 5,
-                        "three_most_commonly_used_tools_or_platforms": [
-                            "Figma",
-                            "Slack",
-                            "Jira"
-                        ],
-                        "available_hours_agent_can_commit": "20_hours_per_week",
-                        "time_zone": "+01:00",
-                        "portfolio_link": "https://portfolio.example.com/john-doe",
-                        "is_agent_open_to_calls_and_video_meetings": True,
-                        "does_agent_have_working_computer": True,
-                        "does_agent_have_stable_internet": True,
-                        "is_agent_comfortable_with_time_tracking_tools": True,
-                        "date_created": 1763115507,
-                        "last_updated": 1763115507
-                    },
+                    "agent_id": "67514f4bf011bc33ab3c25e9",
                     "timeline": {
                         "start_date": int(time.time()),
                         "deadline": int(time.time())
@@ -238,19 +211,16 @@ async def admin_sending_client_job_proposal(
             }
         }
     ),
-    token: accessTokenOut = Depends(verify_admin_token),
+    token: dict = Depends(verify_admin_token),
 ):
     
     old_data =await retrieve_jobs_by_jobs_id(id=job_id)
     if old_data.admin_approved == False and old_data.client_approved==False:
-        selected_agents = old_data.selected_agents or []
-        for selected_agent in selected_agents:
-            if selected_agent ==job_data.agent:
-                raise HTTPException(status_code=409,detail="admin has already sent agent and client this proposal before")
-        
-        old_data.selected_agents.append(job_data.agent)
-        
-        data = JobsUpdate(admin_approved=True, break_down=job_data.break_down,selected_agents=old_data.selected_agents,proposal=job_data.proposal)
+        data = await build_admin_proposal_update(
+            job=old_data,
+            proposal_data=job_data,
+            admin_user_id=token.get("userId") if isinstance(token, dict) else None,
+        )
         client_alert =AlertsBase(user_type=UserTypes.client,user_id=old_data.client_id,priority=PriorityStatus.very_high,alert_type=AlertType.new_message,alert_title=f"Admin Just Sent you a proposal on the Job: {old_data.project_title}",alert_description=f"Admin Just Sent you a proposal on the Job {old_data.project_title}, ",alert_primary_action="Mark as Read",alert_secondary_action="")
         celery_app.send_task("celery_worker.add_new_alert",args=[client_alert.model_dump()])
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
@@ -350,9 +320,9 @@ async def client_setting_meeting(
     if jobs:
          for agent in jobs.recommended_agents:
             if agent.id ==job_meeting_data.agent_id:
-                client_alert =AlertsBase(user_type=UserTypes.client,user_id=token.userId,priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}, {jobs.budget}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
-                agent_alert =AlertsBase(user_type=UserTypes.agent,user_id=job_meeting_data.agent_id,priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}, {jobs.budget}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
-                admin_alert =AlertsBase(user_type=UserTypes.admin,user_id="admin_id",priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}, {jobs.budget}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
+                client_alert =AlertsBase(user_type=UserTypes.client,user_id=token.userId,priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
+                agent_alert =AlertsBase(user_type=UserTypes.agent,user_id=job_meeting_data.agent_id,priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
+                admin_alert =AlertsBase(user_type=UserTypes.admin,user_id="admin_id",priority=PriorityStatus.very_high,alert_type=AlertType.meeting,alert_title=f"Client Created A Meeting to discuss the job: {jobs.project_title}",alert_description=f"Client Created A Meeting to discuss the job: {jobs.project_title}, {jobs.description}",alert_primary_action="Mark as Read",alert_secondary_action="Cancel")
                 # Make the db functions go to the queue
                 # new_client_alert = await add_alerts(alerts_data=client_alert)
                 celery_app.send_task("celery_worker.add_new_alert",args=[client_alert.model_dump()])
@@ -376,10 +346,10 @@ async def client_should_use_this_to_mark_job_as_complete(job_id:str,token:access
           
         update_data = JobsUpdate(isCompleted=True,status=JobStatus.completed) 
         item = await update_jobs_by_id(jobs_id=job_id,jobs_data=update_data,status=JobStatus.completed)
-        client_alert =AlertsBase(user_type=UserTypes.client,user_id=token.userId,priority=PriorityStatus.very_high,alert_type=AlertType.agent_completion_update,alert_title=f"Client Just Completed the Job: {jobs.project_title}",alert_description=f" {jobs.project_title}, {jobs.description}, {jobs.budget} has reached completion",alert_primary_action="Mark as Read")
+        client_alert =AlertsBase(user_type=UserTypes.client,user_id=token.userId,priority=PriorityStatus.very_high,alert_type=AlertType.agent_completion_update,alert_title=f"Client Just Completed the Job: {jobs.project_title}",alert_description=f" {jobs.project_title}, {jobs.description} has reached completion",alert_primary_action="Mark as Read")
         celery_app.send_task("celery_worker.add_new_alert",args=[client_alert.model_dump()])
         for selected_agent in jobs.selected_agents:
-            agent_alert =AlertsBase(user_type=UserTypes.agent,user_id=selected_agent.id,priority=PriorityStatus.very_high,alert_type=AlertType.agent_completion_update,alert_title=f"Client Just Completed the Job: {jobs.project_title}",alert_description=f" {jobs.project_title}, {jobs.description}, {jobs.budget} has reached completion",alert_primary_action="Mark as Read")
+            agent_alert =AlertsBase(user_type=UserTypes.agent,user_id=selected_agent.id,priority=PriorityStatus.very_high,alert_type=AlertType.agent_completion_update,alert_title=f"Client Just Completed the Job: {jobs.project_title}",alert_description=f" {jobs.project_title}, {jobs.description} has reached completion",alert_primary_action="Mark as Read")
             celery_app.send_task("celery_worker.add_new_alert",args=[agent_alert.model_dump()])
         # Make the db functions go to the queue
         # new_client_alert = await add_alerts(alerts_data=client_alert)
