@@ -12,6 +12,7 @@ from pymongo import ReturnDocument
 from core.database import db
 from fastapi import HTTPException, status
 from typing import List, Optional
+from pydantic import ValidationError
 from schemas.agent import AgentOut
 from schemas.user_schema import UserOut, UserCreate, UserUpdate
 
@@ -51,7 +52,11 @@ async def get_agents(filter_dict: dict = {}, start=0, stop=100) -> List[UserOut]
         agent_list = []
 
         async for doc in cursor:
-            agent_list.append(AgentOut(**doc))
+            try:
+                agent_list.append(AgentOut(**doc))
+            except ValidationError:
+                # Skip legacy/incomplete agent records that don't match the schema.
+                continue
 
         return agent_list
 

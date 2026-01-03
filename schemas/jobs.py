@@ -110,6 +110,7 @@ class JobsOut(JobsBase):
     def set_dynamic_values(cls,values): # type: ignore
         values['id']= str(values.get('_id')) # type: ignore
         return values # type: ignore
+    model_config = ConfigDict(extra="ignore")
     class Config:
         from_attributes = True
         populate_by_name = True

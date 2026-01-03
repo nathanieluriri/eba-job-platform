@@ -12,6 +12,7 @@ from pymongo import ReturnDocument
 from core.database import db
 from fastapi import HTTPException,status
 from typing import List,Optional
+from pydantic import ValidationError
 from schemas.jobs import JobsUpdate, JobsCreate, JobsOut
 
 async def create_jobs(jobs_data: JobsCreate) -> JobsOut:
@@ -48,7 +49,11 @@ async def get_jobss(filter_dict: dict = {},start=0,stop=100) -> List[JobsOut]:
         jobs_list = []
 
         async for doc in cursor:
-            jobs_list.append(JobsOut(**doc))
+            try:
+                jobs_list.append(JobsOut(**doc))
+            except ValidationError:
+                # Skip legacy/incomplete job records that don't match the schema.
+                continue
 
         return jobs_list
 
