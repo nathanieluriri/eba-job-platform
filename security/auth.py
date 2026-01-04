@@ -25,8 +25,12 @@ async def verify_token(token: str = Depends(token_auth_scheme))->accessTokenOut:
 
 
 
-async def verify_client_token(token: str = Depends(token_auth_scheme))->accessTokenOut:
-    result = await get_client_access_tokens(accessToken=token.credentials)
+async def verify_client_token(token= Depends(token_auth_scheme))->accessTokenOut:
+    
+    encryptedAccessToken=token.credentials
+    
+    
+    result = await get_client_access_tokens(accessToken=encryptedAccessToken)
     
     if result==None:
         raise HTTPException(

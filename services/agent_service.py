@@ -22,7 +22,7 @@ from repositories.agent import (
     delete_agent,
 )
 from schemas.agent import AgentCreate, AgentUpdate, AgentOut
-from schemas.user_schema import UserBase,UserOut
+from schemas.user_schema import UserBase, UserLogin,UserOut
 from schemas.tokens_schema import accessTokenCreate,refreshTokenCreate
 from security.hash import check_password
 
@@ -106,11 +106,11 @@ async def update_agent_by_id(agent_id: str, agent_data: AgentUpdate) -> AgentOut
 
 
 
-async def authenticate_agent(user_data:UserBase )->UserOut:
+async def authenticate_agent(user_data:UserLogin )->UserOut:
     user = await get_agent(filter_dict={"email":user_data.email})
 
     if user != None:
-        if check_password(password=user_data.password,hashed=user.password ):
+        if check_password(password=str(user_data.password),hashed=user.password ):
             user.password=""
             access_token = await add_access_tokens(token_data=accessTokenCreate(userId=user.id))
             refresh_token  = await add_refresh_tokens(token_data=refreshTokenCreate(userId=user.id,previousAccessToken=access_token.accesstoken))

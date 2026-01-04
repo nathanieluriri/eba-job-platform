@@ -62,22 +62,14 @@ async def list_jobss(
         
         description="Start index (default: 0)",
         examples={
-            "example_start": {
-                "summary": "Start at the first job",
-                "description": "This sets the starting index of the jobs list to fetch. ⚠️ **REQUIRES ADMIN TOKENS**",
-                "value": 0
-            }
-        }
+ 'start_at_zero': {'summary': 'Start at the first job', 'description': 'This sets the starting index of the jobs list to fetch. ⚠️ **REQUIRES ADMIN TOKENS**', 'value': 0}
+ }
     ),
     stop: int = Query(
         description="Stop index (default: 100)",
         examples={
-            "example_stop": {
-                "summary": "Fetch up to 100 jobs",
-                "description": "This sets the stopping index of the jobs list to fetch.",
-                "value": 100
-            }
-        }
+ 'fetch_up_to_100': {'summary': 'Fetch up to 100 jobs', 'description': 'This sets the stopping index of the jobs list to fetch.', 'value': 100}
+ }
     ),
     token: accessTokenOut = Depends(verify_admin_token),
 ):
@@ -94,19 +86,9 @@ async def get_my_jobss(
     id: str = Query(
         ...,
         description="Job ID to fetch a specific job item.",
-        examples={
-            "job_id_example": {
-                "summary": "Fetch a specific Job",
-                "description": (
-                    "Provide the unique job ID to fetch details about a specific job. "
-                    "This endpoint requires **Admin authentication tokens**."
-                    "⚠️ **REQUIRES CLIENT TOKENS**"
-                ),
-                "value": "job_64a7f91e92d8b3aef1234567"
-            }
-        }
+        examples=["job_64a7f91e92d8b3aef1234567"]
     ),
-    tokentoken: accessTokenOut = Depends(verify_admin_token),
+    token: accessTokenOut = Depends(verify_admin_token),
 ):
     items = await retrieve_jobs_by_jobs_id(id=id)
     return APIResponse(status_code=200, data=items, detail="Job item fetched successfully")
@@ -358,6 +340,3 @@ async def client_should_use_this_to_mark_job_as_complete(job_id:str,token:access
 
         return APIResponse(status_code=200, data=item, detail="applications updated successfully")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
-
-
-

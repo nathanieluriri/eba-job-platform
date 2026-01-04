@@ -171,10 +171,10 @@ def _login_payload(email: str, password: str) -> Dict[str, Any]:
     return {"email": email, "password": password}
 
 
-def _admin_creds() -> Tuple[Optional[str], Optional[str]]:
+def _admin_creds() -> Tuple[str, str]:
     email = _env("ADMIN_EMAIL") or _env("SUPER_ADMIN_EMAIL")
     password = _env("ADMIN_PASSWORD") or _env("SUPER_ADMIN_PASSWORD")
-    return email, password
+    return f"{email}", f"{password}"
 
 
 ENDPOINTS: List[EndpointSpec] = [
@@ -421,6 +421,61 @@ def _create_and_approve_user(
     return user_id
 
 
+def _extract_id_from_response(resp: httpx.Response) -> Optional[str]:
+    try:
+        data = _unwrap_data(resp.json())
+    except Exception:
+        return None
+    if isinstance(data, dict):
+        return data.get("id")
+    return None
+
+
+def _get_client_id(client: httpx.Client, base_url: str, token: str) -> Optional[str]:
+    resp = client.get(f"{base_url}/v1/clients/me", headers={"Authorization": f"Bearer {token}"})
+    return _extract_id_from_response(resp)
+
+
+def _get_agent_id(client: httpx.Client, base_url: str, token: str) -> Optional[str]:
+    resp = client.get(f"{base_url}/v1/agents/me", headers={"Authorization": f"Bearer {token}"})
+    return _extract_id_from_response(resp)
+
+
+def _create_job(client: httpx.Client, base_url: str, token: str) -> Optional[str]:
+    payload = {
+        "project_title": "Smoke Test Job",
+        "primary_area_of_expertise": "Web Development",
+        "description": "Created by test.py",
+        "timeline": {"start_date": int(time.time())},
+    }
+    resp = client.post(f"{base_url}/v1/jobss/", json=payload, headers={"Authorization": f"Bearer {token}"})
+    if resp.status_code != 200:
+        console.print(Panel.fit(f"Job create failed: {resp.status_code}\n{resp.text}", title="Setup"))
+        return None
+    data = _unwrap_data(resp.json())
+    if isinstance(data, dict) and "id" in data:
+        return data.get("id")
+    return None
+
+
+def _create_log(client: httpx.Client, base_url: str, token: str, job_id: str) -> Optional[str]:
+    payload = {
+        "job_id": job_id,
+        "log_comment": "Smoke log entry",
+        "files": [],
+        "hours": 1,
+        "log_title": "Smoke Log",
+    }
+    resp = client.post(f"{base_url}/v1/logss/post", json=payload, headers={"Authorization": f"Bearer {token}"})
+    if resp.status_code != 200:
+        console.print(Panel.fit(f"Log create failed: {resp.status_code}\n{resp.text}", title="Setup"))
+        return None
+    data = _unwrap_data(resp.json())
+    if isinstance(data, dict) and "id" in data:
+        return data.get("id")
+    return None
+
+
 @pytest.fixture(scope="session")
 def tokens(client: httpx.Client, ctx: Ctx) -> Dict[str, Dict[str, Optional[str]]]:
     admin_email, admin_password = _admin_creds()
@@ -467,6 +522,23 @@ def tokens(client: httpx.Client, ctx: Ctx) -> Dict[str, Dict[str, Optional[str]]
     table.add_row("agent", "yes" if agent_access else "no", "yes" if agent_refresh else "no")
     console.print(table)
 
+    # Create and cache IDs for tests that require them.
+    if ctx.allow_stateful and client_access:
+        client_id = _get_client_id(client, ctx.base_url, client_access)
+        if client_id:
+            ctx.ids["USER_ID"] = ctx.ids.get("USER_ID") or client_id
+        job_id = _create_job(client, ctx.base_url, client_access)
+        if job_id:
+            ctx.ids["JOB_ID"] = ctx.ids.get("JOB_ID") or job_id
+    if ctx.allow_stateful and agent_access:
+        agent_id = _get_agent_id(client, ctx.base_url, agent_access)
+        if agent_id:
+            ctx.ids["AGENT_ID"] = ctx.ids.get("AGENT_ID") or agent_id
+        if ctx.ids.get("JOB_ID"):
+            log_id = _create_log(client, ctx.base_url, agent_access, ctx.ids["JOB_ID"])
+            if log_id:
+                ctx.ids["LOG_ID"] = ctx.ids.get("LOG_ID") or log_id
+
     return {
         "admin": {"access": admin_access, "refresh": admin_refresh},
         "client": {"access": client_access, "refresh": client_refresh},
@@ -507,9 +579,14 @@ def test_endpoint_matrix(ep: EndpointSpec, as_role: Role, client: httpx.Client, 
             f"{ep.name}: expected {expected_ok} got {resp.status_code}: {resp.text}"
         )
     elif as_role in ep.roles and not token_available:
-        assert resp.status_code in (401, 403, 422), (
-            f"{ep.name}: missing token for {as_role}, got {resp.status_code}: {resp.text}"
-        )
+        if "public" in ep.roles:
+            assert resp.status_code in expected_ok or resp.status_code == 429, (
+                f"{ep.name}: expected {expected_ok} got {resp.status_code}: {resp.text}"
+            )
+        else:
+            assert resp.status_code in (401, 403, 422), (
+                f"{ep.name}: missing token for {as_role}, got {resp.status_code}: {resp.text}"
+            )
     else:
         assert resp.status_code in (401, 403, 422, 429), (
             f"{ep.name}: expected 401/403/422 got {resp.status_code}: {resp.text}"

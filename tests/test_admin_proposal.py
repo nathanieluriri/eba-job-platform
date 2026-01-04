@@ -48,7 +48,7 @@ def _sample_agent(agent_id: str) -> AgentOut:
 
 def _sample_job(job_id: str) -> JobsOut:
     return JobsOut(
-        _id=job_id,
+        
         project_title="Test Job",
         primary_area_of_expertise=JobCatgeries.web_development,
         description="Build a demo",

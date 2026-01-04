@@ -82,8 +82,9 @@ async def list_agents(
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
        response_model_exclude={"data": {"__all__": {"password"}}},
-    dependencies=[Depends(verify_client_token)]
+    dependencies=[Depends(verify_admin_token)]
 )
+
 async def list_agents_according_to_job_category(
     start: Annotated[
         int,
@@ -131,7 +132,7 @@ async def get_my_agents(token:accessTokenOut =Depends(verify_agent_token)):
 
 
 @router.get("/client/me", response_model_exclude={"data": {"password"}},response_model_exclude_none=True, response_model=APIResponse[UserOut])
-async def get_my_agents(agent_id:str,token:accessTokenOut =Depends(verify_client_token)):
+async def get_agent_as_client(agent_id:str,token:accessTokenOut =Depends(verify_client_token)):
     
     items = await retrieve_agent_by_agent_id(id=agent_id)                                                                         
     return APIResponse(status_code=200, data=items, detail="agents items fetched")
