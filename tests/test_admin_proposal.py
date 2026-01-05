@@ -13,6 +13,7 @@ from schemas.imports import (
     UTCOffsets,
 )
 from schemas.jobs import JobsOut, JobsUpdate
+from schemas.proposals import JobProposalOut
 from security.auth import verify_admin_token, verify_client_token
 
 
@@ -81,12 +82,14 @@ def test_admin_can_submit_proposal(monkeypatch):
     async def fake_retrieve_agent(agent_id: str):
         return agent
 
+    async def fake_add_proposal(proposal_data):
+        return JobProposalOut(**proposal_data.model_dump(), _id="proposal-123")
+
     monkeypatch.setattr(jobs_router, "retrieve_jobs_by_jobs_id", fake_retrieve)
     monkeypatch.setattr(jobs_router, "update_jobs_by_id", fake_update)
     monkeypatch.setattr(jobs_router, "celery_app", DummyCelery())
-    monkeypatch.setattr(
-        "services.jobs_service.retrieve_agent_by_agent_id", fake_retrieve_agent
-    )
+    monkeypatch.setattr(jobs_router, "retrieve_agent_by_agent_id", fake_retrieve_agent)
+    monkeypatch.setattr(jobs_router, "add_proposal", fake_add_proposal)
 
     def override_admin():
         return {"userId": "admin-1", "role": "admin"}
@@ -109,6 +112,7 @@ def test_admin_can_submit_proposal(monkeypatch):
     assert data["proposal"] == "We can deliver in 2 weeks."
     assert data["proposal_created_by_role"] == "admin"
     assert data["proposal_agent_id"] == agent.id
+    assert data["latest_proposal_id"] == "proposal-123"
     assert "budget" not in data
 
     main.app.dependency_overrides.clear()

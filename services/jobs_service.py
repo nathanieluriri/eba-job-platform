@@ -18,6 +18,7 @@ from repositories.jobs import (
     delete_jobs,
 )
 from schemas.jobs import AdminJobProposal, JobsCreate, JobsUpdate, JobsOut
+from schemas.agent import AgentOut
 from services.agent_service import retrieve_agent_by_agent_id
 
 def _agent_id_from_entry(entry) -> str | None:
@@ -33,12 +34,14 @@ async def build_admin_proposal_update(
     job: JobsOut,
     proposal_data: AdminJobProposal,
     admin_user_id: str | None,
+    agent: AgentOut | None = None,
 ) -> JobsUpdate:
     """Create a JobsUpdate payload for an admin proposal with validated agent data."""
-    if proposal_data.agent is not None:
-        agent = proposal_data.agent
-    else:
-        agent = await retrieve_agent_by_agent_id(proposal_data.agent_id)
+    if agent is None:
+        if proposal_data.agent is not None:
+            agent = proposal_data.agent
+        else:
+            agent = await retrieve_agent_by_agent_id(proposal_data.agent_id)
 
     selected_agents = list(job.selected_agents or [])
     for selected_agent in selected_agents:

@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 from core.scheduler import scheduler
 from schemas.agent import AgentOut
 from schemas.alerts import AlertsBase, AlertsCreate
-from schemas.imports import AlertType, PriorityStatus, UserTypes
+from schemas.imports import AlertType, PriorityStatus, UserTypes, ProposalState
 from schemas.response_schema import APIResponse
 from security.auth import verify_client_token,accessTokenOut,verify_agent_token,verify_admin_token
 from celery_worker import celery_app
+from schemas.proposals import JobProposalCreate, JobProposalUpdate
 from schemas.jobs import (
     JobMeeting,
     JobsCreate,
@@ -23,7 +24,7 @@ from schemas.jobs import (
     
 )
 from bson import ObjectId
-from services.agent_service import retrieve_agents
+from services.agent_service import retrieve_agents, retrieve_agent_by_agent_id
 from services.alerts_service import add_alerts
 from services.jobs_service import (
     add_jobs,
@@ -36,6 +37,7 @@ from services.jobs_service import (
     get_jobs,
     build_admin_proposal_update,
 )
+from services.proposals_service import add_proposal, update_proposal_by_id
 
 router = APIRouter(prefix="/jobss", tags=["Jobss"])
 # TODO: NEW FLOW FOR THE JOB POSTING IS WHEN CLIENTS POST JOBS ADMIN MAKE EDITS PLUS RECOMMEND AGENTS FOR CLIENTS TO JUDGE
@@ -62,14 +64,22 @@ async def list_jobss(
         
         description="Start index (default: 0)",
         examples={
- 'start_at_zero': {'summary': 'Start at the first job', 'description': 'This sets the starting index of the jobs list to fetch. ⚠️ **REQUIRES ADMIN TOKENS**', 'value': 0}
- }
+            "example_start": {
+                "summary": "Start at the first job",
+                "description": "This sets the starting index of the jobs list to fetch. ⚠️ **REQUIRES ADMIN TOKENS**",
+                "value": 0
+            }
+        }
     ),
     stop: int = Query(
         description="Stop index (default: 100)",
         examples={
- 'fetch_up_to_100': {'summary': 'Fetch up to 100 jobs', 'description': 'This sets the stopping index of the jobs list to fetch.', 'value': 100}
- }
+            "example_stop": {
+                "summary": "Fetch up to 100 jobs",
+                "description": "This sets the stopping index of the jobs list to fetch.",
+                "value": 100
+            }
+        }
     ),
     token: accessTokenOut = Depends(verify_admin_token),
 ):
@@ -86,9 +96,19 @@ async def get_my_jobss(
     id: str = Query(
         ...,
         description="Job ID to fetch a specific job item.",
-        examples=["job_64a7f91e92d8b3aef1234567"]
+        examples={
+            "job_id_example": {
+                "summary": "Fetch a specific Job",
+                "description": (
+                    "Provide the unique job ID to fetch details about a specific job. "
+                    "This endpoint requires **Admin authentication tokens**."
+                    "⚠️ **REQUIRES CLIENT TOKENS**"
+                ),
+                "value": "job_64a7f91e92d8b3aef1234567"
+            }
+        }
     ),
-    token: accessTokenOut = Depends(verify_admin_token),
+    tokentoken: accessTokenOut = Depends(verify_admin_token),
 ):
     items = await retrieve_jobs_by_jobs_id(id=id)
     return APIResponse(status_code=200, data=items, detail="Job item fetched successfully")
@@ -198,11 +218,30 @@ async def admin_sending_client_job_proposal(
     
     old_data =await retrieve_jobs_by_jobs_id(id=job_id)
     if old_data.admin_approved == False and old_data.client_approved==False:
+        if job_data.agent is not None:
+            agent = job_data.agent
+        else:
+            agent = await retrieve_agent_by_agent_id(job_data.agent_id)
+
+        proposal_payload = JobProposalCreate(
+            job_id=job_id,
+            agent_id=agent.id,
+            proposal=job_data.proposal,
+            break_down=job_data.break_down,
+            timeline=job_data.timeline,
+            proposal_created_by_user_id=token.get("userId") if isinstance(token, dict) else None,
+            proposal_created_by_role="admin",
+            proposal_created_via="admin",
+        )
+        proposal = await add_proposal(proposal_payload)
+
         data = await build_admin_proposal_update(
             job=old_data,
             proposal_data=job_data,
             admin_user_id=token.get("userId") if isinstance(token, dict) else None,
+            agent=agent,
         )
+        data = data.model_copy(update={"latest_proposal_id": proposal.id})
         client_alert =AlertsBase(user_type=UserTypes.client,user_id=old_data.client_id,priority=PriorityStatus.very_high,alert_type=AlertType.new_message,alert_title=f"Admin Just Sent you a proposal on the Job: {old_data.project_title}",alert_description=f"Admin Just Sent you a proposal on the Job {old_data.project_title}, ",alert_primary_action="Mark as Read",alert_secondary_action="")
         celery_app.send_task("celery_worker.add_new_alert",args=[client_alert.model_dump()])
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
@@ -241,6 +280,11 @@ async def client_accepting_admin_job_proposal(
     if jobs:
         data = JobsUpdate(client_approved=True, break_down=job_data.break_down,selected_agents=job_data.selected_agents,proposal=job_data.proposal,status=JobStatus.active) 
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
+        if jobs.latest_proposal_id:
+            await update_proposal_by_id(
+                proposal_id=jobs.latest_proposal_id,
+                proposal_data=JobProposalUpdate(status=ProposalState.accepted),
+            )
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
     
 
@@ -270,6 +314,11 @@ async def client_rejecting_admin_job_proposal(
     if jobs:
         data = JobsUpdate(client_approved=False,client_rejection_reason=job_data.client_rejection_reason, break_down=job_data.break_down,recommended_agents=job_data.recommended_agents,proposal=job_data.proposal,status=JobStatus.active) 
         returned_job_stuff =await update_jobs_by_id(jobs_id=job_id,jobs_data=data)
+        if jobs.latest_proposal_id:
+            await update_proposal_by_id(
+                proposal_id=jobs.latest_proposal_id,
+                proposal_data=JobProposalUpdate(status=ProposalState.rejected),
+            )
         return APIResponse(status_code=200,data=returned_job_stuff,detail="Successfully approved job-posting")
     
     
@@ -340,3 +389,6 @@ async def client_should_use_this_to_mark_job_as_complete(job_id:str,token:access
 
         return APIResponse(status_code=200, data=item, detail="applications updated successfully")
     return APIResponse(status_code=403,data="User Doesn't have any job with this job id",detail="Unauthorized Access")
+
+
+

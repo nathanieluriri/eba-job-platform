@@ -83,6 +83,7 @@ class JobsUpdate(BaseModel):
     proposal_created_by_role: Optional[str] = None
     proposal_created_via: Optional[str] = None
     proposal_agent_id: Optional[str] = None
+    latest_proposal_id: Optional[str] = None
     last_updated: int = Field(default_factory=lambda: int(time.time()))
     model_config = ConfigDict(extra="forbid")
 
@@ -106,6 +107,7 @@ class JobsOut(JobsBase):
     proposal_created_by_role: Optional[str] = None
     proposal_created_via: Optional[str] = None
     proposal_agent_id: Optional[str] = None
+    latest_proposal_id: Optional[str] = None
     @model_validator(mode='before')
     def set_dynamic_values(cls,values): # type: ignore
         values['id']= str(values.get('_id')) # type: ignore
