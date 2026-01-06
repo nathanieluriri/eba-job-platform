@@ -4,7 +4,7 @@ from core.redis_cache import get_cached_value,cache_with_expiry
 from typing import List,Annotated
 from schemas.imports import JobCatgeries
 from services.utils import generate_random_string,generate_random_string_digits_only
-from security.auth import verify_admin_token,verify_token,verify_client_token
+from security.auth import verify_admin_or_client
 from schemas.response_schema import APIResponse
 from schemas.agent import (
     AgentCreate,
@@ -30,7 +30,7 @@ from services.agent_service import (
     update_agent_by_id,
     authenticate_agent
 )
-from security.auth import verify_agent_token,accessTokenOut
+from security.auth import verify_agent_token, accessTokenOut
 
 
 router = APIRouter(prefix="/agents", tags=["Agents"])
@@ -41,7 +41,7 @@ router = APIRouter(prefix="/agents", tags=["Agents"])
     response_model=APIResponse[List[UserOut]],
     response_model_exclude_none=True,
        response_model_exclude={"data": {"__all__": {"password"}}},
-    dependencies=[Depends(verify_admin_token)]
+    dependencies=[Depends(verify_admin_or_client)]
 )
 async def list_agents(
     # Use Path and Query for explicit documentation/validation of GET parameters
@@ -55,9 +55,9 @@ async def list_agents(
     ] =100
 ):
     """
-    **ADMIN ONLY:** Retrieves a paginated list of all registered users.
+    **ADMIN OR CLIENT:** Retrieves a paginated list of all registered users.
 
-    **Authorization:** Requires a **valid Access Token** (Admin role) in the 
+    **Authorization:** Requires a **valid Access Token** (Admin or Client role) in the
     `Authorization: Bearer <token>` header.
 
     ### Examples (Illustrative URLs):
@@ -82,7 +82,7 @@ async def list_agents(
   
     response_model_exclude_none=True,
        response_model_exclude={"data": {"__all__": {"password"}}},
-    dependencies=[Depends(verify_admin_token)]
+    dependencies=[Depends(verify_admin_or_client)]
 )
 
 async def list_agents_according_to_job_category(
@@ -96,13 +96,13 @@ async def list_agents_according_to_job_category(
     ] = 100,
     primary_area_of_expertise: Annotated[
         JobCatgeries,
-        Query(description="Using client tokens this can get different kinds of agents based on categories.")
+        Query(description="Admin or client tokens can request agents by category.")
     ] = JobCatgeries.web_development
 ):
     """
-    **ADMIN ONLY:** Retrieves a paginated list of all registered users.
+    **ADMIN OR CLIENT:** Retrieves a paginated list of all registered users.
 
-    **Authorization:** Requires a **valid Access Token** (Admin role) in the 
+    **Authorization:** Requires a **valid Access Token** (Admin or Client role) in the
     `Authorization: Bearer <token>` header.
 
     ### Examples (Illustrative URLs):
@@ -131,8 +131,8 @@ async def get_my_agents(token:accessTokenOut =Depends(verify_agent_token)):
 
 
 
-@router.get("/client/me", response_model_exclude={"data": {"password"}},response_model_exclude_none=True, response_model=APIResponse[UserOut])
-async def get_agent_as_client(agent_id:str,token:accessTokenOut =Depends(verify_client_token)):
+@router.get("/client/me", response_model_exclude={"data": {"password"}},response_model_exclude_none=True, response_model=APIResponse[UserOut], dependencies=[Depends(verify_admin_or_client)])
+async def get_agent_as_client(agent_id: str):
     
     items = await retrieve_agent_by_agent_id(id=agent_id)                                                                         
     return APIResponse(status_code=200, data=items, detail="agents items fetched")

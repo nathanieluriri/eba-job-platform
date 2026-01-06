@@ -20,11 +20,13 @@ import logging
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
-    scheduler.start()
+    if os.getenv("DISABLE_SCHEDULER") != "1":
+        scheduler.start()
     try:
         yield
     finally:
-        scheduler.shutdown()
+        if os.getenv("DISABLE_SCHEDULER") != "1":
+            scheduler.shutdown()
     
     
 

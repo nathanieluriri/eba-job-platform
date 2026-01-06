@@ -171,10 +171,10 @@ def _login_payload(email: str, password: str) -> Dict[str, Any]:
     return {"email": email, "password": password}
 
 
-def _admin_creds() -> Tuple[str, str]:
-    email = _env("ADMIN_EMAIL") or _env("SUPER_ADMIN_EMAIL")
-    password = _env("ADMIN_PASSWORD") or _env("SUPER_ADMIN_PASSWORD")
-    return f"{email}", f"{password}"
+def _admin_creds() -> Tuple[Optional[str], Optional[str]]:
+    email = "superadmin@gmail.com"
+    password = "string"
+    return email, password
 
 
 ENDPOINTS: List[EndpointSpec] = [

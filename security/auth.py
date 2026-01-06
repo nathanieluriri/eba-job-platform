@@ -1,6 +1,8 @@
 # auth.py
+from typing import Union
+
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from security.tokens import validate_admin_accesstoken,validate_admin_accesstoken_otp,generate_refresh_tokens,generate_member_access_tokens, validate_member_accesstoken, validate_refreshToken,validate_member_accesstoken_without_expiration,generate_admin_access_tokens,validate_expired_admin_accesstoken
 from security.encrypting_jwt import decode_jwt_token,decode_jwt_token_without_expiration
@@ -25,11 +27,10 @@ async def verify_token(token: str = Depends(token_auth_scheme))->accessTokenOut:
 
 
 
-async def verify_client_token(token= Depends(token_auth_scheme))->accessTokenOut:
-    
-    encryptedAccessToken=token.credentials
-    
-    
+async def verify_client_token(
+    token: HTTPAuthorizationCredentials = Depends(token_auth_scheme),
+) -> accessTokenOut:
+    encryptedAccessToken = token.credentials
     result = await get_client_access_tokens(accessToken=encryptedAccessToken)
     
     if result==None:
@@ -66,17 +67,20 @@ async def verify_token_to_refresh(token: str = Depends(token_auth_scheme)):
         
         
       
-async def verify_admin_token(token: str = Depends(token_auth_scheme)):
+async def verify_admin_token(
+    token: HTTPAuthorizationCredentials = Depends(token_auth_scheme),
+):
     from repositories.tokens_repo import get_admin_access_tokens
     
     try:
         decoded_access_token = await decode_jwt_token(token=token.credentials)
-        print("")
-        print("")
-        print(decoded_access_token['accessToken'])
-        print("")
-        print("")
-        result = await get_admin_access_tokens(accessToken=decoded_access_token['accessToken'])
+        access_token = decoded_access_token.get("accessToken")
+        if not access_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid admin token"
+            )
+        result = await get_admin_access_tokens(accessToken=access_token)
 
         if result==None:
             raise HTTPException(
@@ -89,8 +93,6 @@ async def verify_admin_token(token: str = Depends(token_auth_scheme)):
                 detail="Admin Token hasn't been activated"
             )
         elif isinstance(result, accessTokenOut):
-            
-            decoded_access_token = await decode_jwt_token(token=token.credentials)
             return decoded_access_token
     except TypeError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Access Token Expired")
@@ -136,3 +138,29 @@ async def verify_any_token(token:str=Depends(token_auth_scheme)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Token"
         )
+        
+        
+        
+AuthResult = Union[dict, accessTokenOut]
+
+async def verify_admin_or_client(
+    token: HTTPAuthorizationCredentials = Depends(token_auth_scheme),
+) -> AuthResult:
+    try:
+        return await verify_admin_token(token)
+    except HTTPException as exc:
+        if exc.status_code not in (
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        ):
+            raise
+
+    try:
+        return await verify_client_token(token)
+    except HTTPException:
+        pass
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid token (admin or client required)."
+    )
